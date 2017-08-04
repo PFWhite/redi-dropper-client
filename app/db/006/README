@@ -1,0 +1,3 @@
+This database change is to enable entering of arbitrary json into the SubjectFile table.
+We want to do this because polyjuice, a library to clean and read dicom files is being
+integrated to let uploaders do less data entry
