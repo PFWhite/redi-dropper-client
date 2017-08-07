@@ -183,7 +183,7 @@ def api_delete_file():
         response = utils.jsonify_error({"exception": ret_value})
 
     return response
-    
+
 @app.route('/api/update_fileType', methods=['POST'])
 @login_required
 def api_update_fileType():
@@ -216,6 +216,33 @@ def download_file():
         app.config['REDIDROPPER_UPLOAD_SAVED_DIR'])
     LogEntity.file_downloaded(session['uuid'], file_path)
     return send_file(file_path, as_attachment=True)
+
+@app.route('/api/batch_download', methods=['GET'])
+@login_required
+def batch_download():
+    """
+    Uses the url args to find matching files. Then downloads a
+    zipfile containing those files
+
+    TODO: configurable tmp directory
+    """
+    # get url params
+    params = request.args
+    # find matching files
+    paths = SubjectFileEntity.get_matching_paths(**params)
+    # write summary metadata file
+    metadata = {
+        'url_parameters': params,
+    }
+    # zip files into tmp
+    zip_path = '/tmp/batch_download-' + str(datetime.datetime.now()) + '.zip'
+    with zipfile.ZipFile(zip_path, 'w') as myzip:
+        for path in paths:
+            myzip.write(f)
+    # log steps
+    # send zip
+    return send_file(zip_path, as_attachment=True)
+    pass
 
 @app.route("/api/all_files_info", methods=['GET'])
 @login_required

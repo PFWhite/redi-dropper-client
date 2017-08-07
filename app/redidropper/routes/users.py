@@ -84,6 +84,7 @@ def get_user_links():
         'admin': ('admin', 'Manage Users'),
         'logs': ('logs', 'View Logs'),
         'dashboard': ('dashboard', 'View Dashboard'),
+        'batch_download': ('batch_download', 'Batch Download'),
         'res_one': ('researcher_one', 'Researcher 1'),
         'res_two': ('researcher_two', 'Researcher 2'),
         'upload_files': ('upload_files', 'Upload Files'),
@@ -93,10 +94,12 @@ def get_user_links():
 
     links = []
 
+
     if ROLE_ADMIN == role:
         links = [pages['admin'],
                  pages['upload_files'],
                  pages['dashboard'],
+                 pages['batch_download'],
                  pages['logs']]
     elif ROLE_TECHNICIAN == role:
         links = [pages['upload_files'], pages['dashboard']]
@@ -114,6 +117,12 @@ def get_user_links():
 def dashboard():
     """ Render the technician's home page """
     return render_template('dashboard.html', user_links=get_user_links())
+
+@app.route('/batch_download')
+@perm_admin_or_technician.require(http_exception=403)
+def batch_download():
+    """ Render the batch_download page """
+    return render_template('batch_download.html', user_links=get_user_links())
 
 
 @app.route('/researcher_one')
