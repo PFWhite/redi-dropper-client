@@ -26,6 +26,7 @@ function install_utils() {
 function install_apache_for_python() {
     # https://www.digitalocean.com/community/tutorials/how-to-deploy-a-flask-application-on-an-ubuntu-vps
     apt-get install -y \
+        inotify-tools \
         libssl-dev \
         apache2 libapache2-mod-wsgi \
         curl \
@@ -81,7 +82,7 @@ function install_dropper() {
         mysql ctsi_dropper_s   < db/003/upgrade.sql
         log "Execute sql: db/004/upgrade.sql"
         mysql ctsi_dropper_s   < db/004/upgrade.sql
-	    log "Execute sql: db/005/upgrade.sql"
+	      log "Execute sql: db/005/upgrade.sql"
         mysql ctsi_dropper_s   < db/005/upgrade.sql
 	
 	

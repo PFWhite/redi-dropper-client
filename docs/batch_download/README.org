@@ -1,0 +1,12 @@
+* Scenario
+Riley the researcher needs to download images in batches in order to
+do processing and analysis on them. Riley wants to be able to select batches
+based on varying criteria like time taken, event they are tied to etc.
+* Implementation
+** Front end
+Need new page and various components for selecting the various tunable things.
+** Back end
+*** TODO New route
+*** TODO Zip multiple files
+*** TODO Metadata.json that contains the image info
+*** TODO Upload zip
