@@ -8,17 +8,17 @@ Goal: Store helper functions not tied to a specific module
 """
 
 import os
-import ast
 import json
 from datetime import datetime, timedelta
-from itsdangerous import URLSafeTimedSerializer
-from flask import flash, request, jsonify
 from hashlib import sha512, sha256
 import hmac
 import base64
-from subprocess import Popen
-from subprocess import PIPE
+
 import pytz as tz
+from itsdangerous import URLSafeTimedSerializer
+from flask import flash, request, jsonify
+
+from cappy import API
 
 FORMAT_US_DATE = "%x"
 FORMAT_US_DATE_TIME = '%x %X'
@@ -262,36 +262,24 @@ def redcap_api_call(url, token, content, fields, max_time):
     Send an API request to the REDCap server.
     Notes:
         - when no fields are specified all fields are retrived
-        - the underlining cURL process is limited to complete
-            within `max_time` seconds
 
     :rtype: dict
     :return: the requested content if it is of valid type (event, record)
     """
     assert content in ['event', 'record']
+    api = API(token, url, 'master.yaml')
 
-    # @TODO: add config flag for enabling/disabling the ssl
-    # certificate validation: curl -k
-    cmd = 'curl -m {} -ksX POST {} ' \
-        ' -d token={} ' \
-        ' -d format=json ' \
-        ' -d content={} ' \
-        ' -d fields="{}"' \
-        ' -d returnFormat=json ' \
-        ' | python -m json.tool ' \
-        .format(max_time, url, token, content, fields)
+    if content == 'record':
+        res = api.export_records(fields=fields)
+    elif content == 'event':
+        res = api.export_events()
 
-    proc = Popen(cmd, shell=True, stdout=PIPE)
-    (out, err) = proc.communicate()
-    # print("redcap_api_call: {}\n{}".format(cmd, out))
-
-    if err:
-        print("redcap_api_call error: \n{}".format(err))
-
+    # print res.content
     data = []
     try:
-        data = ast.literal_eval(out)
+        data = json.loads(str(res.content))
     except Exception as exc:
+        # raise exc
         print("redcap_api_call error parsing curl response:\n{}".format(exc))
     return data
 
