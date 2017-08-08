@@ -219,7 +219,7 @@ def download_file():
 
 @app.route('/api/batch_download', methods=['GET'])
 @login_required
-def batch_download():
+def api_batch_download():
     """
     Uses the url args to find matching files. Then downloads a
     zipfile containing those files
@@ -228,6 +228,7 @@ def batch_download():
     """
     # get url params
     params = request.args
+    print params
     # find matching files
     paths = SubjectFileEntity.get_matching_paths(**params)
     # write summary metadata file
@@ -242,7 +243,6 @@ def batch_download():
     # log steps
     # send zip
     return send_file(zip_path, as_attachment=True)
-    pass
 
 @app.route("/api/all_files_info", methods=['GET'])
 @login_required
