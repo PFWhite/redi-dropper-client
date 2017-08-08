@@ -13,15 +13,20 @@ var BatchInput = React.createClass({
     render: function() {
         var self = this;
         return(
-            <div className="batch-input">
-                <input name={this.props.key}
-                       type="text"
-                       value={this.props.value}
-                       onInput={function (event) {
-                               console.log(event)
-                               self.props.update.call(undefined, event.target.value);
-                           }}
-                />
+            <div className="batch-input form-group">
+                <label className="col-sm-4 control-label" for={this.props.options.mykey}>
+                    { this.props.options.display }
+                </label>
+                <div className="col-sm-8">
+                    <input name={this.props.options.key}
+                        className="form-control"
+                        type={this.props.options.type}
+                        value={this.props.options.value}
+                        onChange={function (event) {
+                                self.props.options.update.call(this, event.target.value);
+                            }}
+                    />
+                </div>
             </div>
         );
     }
@@ -30,29 +35,41 @@ var BatchInput = React.createClass({
 var BatchForm = React.createClass({
     updateField: function(key, value) {
         var data = this.props.formData;
-        console.log(key, value)
         data[key] = value;
         this.props.update(data);
     },
     render: function() {
         var self = this;
-        var keys = [
-            'test'
+        var options = [
+            {
+                key: 'startDate',
+                value: self.props.formData.startDate,
+                type: 'date',
+                update: self.updateField.bind(self, 'startDate'),
+                display: 'Start Date'
+            },
+            {
+                key: 'endDate',
+                value: self.props.formData.endDate,
+                type: 'date',
+                update: self.updateField.bind(self, 'endDate'),
+                display: 'End Date'
+            },
         ];
-        var funcs = keys.map(function(key) {
-            return self.updateField.bind(self, key);
-        });
-        var values = keys.map(function(key) {
-            return self.props.formData[key];
-        });
         return(
-            <div id="batch-form">
-                {keys.map(function (key, index) {
-                     return (
-                         <BatchInput key={key} update={funcs[index]} value={values[index]}/>
-                     )
-                 })}
-                <button onClick={this.props.toggle.bind(undefined)}>Finalize</button>
+            <div id="batch-form" className='row'>
+                <div className="col-sm-offset-3 col-sm-6">
+                    <div className="form-horizontal">
+                        {options.map(function (option, index) {
+                            return (
+                                <BatchInput key={index} options={option}/>
+                            );
+                        })}
+                        <button
+                            className='btn'
+                            onClick={this.props.toggle.bind(this)}>Finalize</button>
+                    </div>
+                </div>
             </div>
         );
     }
@@ -63,7 +80,9 @@ var BatchSummary = React.createClass({
         return(
             <div id="batch-summary">
                 summary: query = {this.props.query}
-                <button onClick={this.props.toggle.bind(undefined)}>Back</button>
+                <button
+                    className='btn'
+                    onClick={this.props.toggle.bind(this)}>Back</button>
             </div>
         );
     }
@@ -74,9 +93,7 @@ var Page = React.createClass({
     getInitialState: function() {
         return {
             activePanel: 0,
-            formData: {
-                test: undefined
-            },
+            formData: {},
             query: '',
         };
     },
@@ -86,13 +103,12 @@ var Page = React.createClass({
             formData: data,
             query: JSON.stringify(data)
         });
-        console.log(JSON.stringify(data));
     },
 
     toggle: function() {
         this.setState({
             activePanel: this.state.activePanel === 0 ? 1 : 0
-        })
+        });
     },
 
     render: function() {
