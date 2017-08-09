@@ -16,3 +16,11 @@
 #batch-page .panel.active {
     z-index: 10;
 }
+
+#batch-page .batch-form-group {
+    text-align: left;
+}
+
+.batch-input {
+    margin-bottom: 1rem;
+}
