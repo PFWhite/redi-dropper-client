@@ -7,6 +7,37 @@ based on varying criteria like time taken, event they are tied to etc.
 Need new page and various components for selecting the various tunable things.
 ** Back end
 *** TODO New route
-*** TODO Zip multiple files
+    Two new routes were implemented: /batch_download and /api/batch_download.
+    The first is in users.py where all pages that load web gui goes and the 
+    second is in the api.py file
+**** /batch_download
+     This just displays the webpage. Every role should have access to this.
+**** /api/batch_download
+     GET:
+     expects a json object encoded as url params that looks like the following
+     #+BEGIN_SRC json
+     {
+         "subjects":["ALL"],
+         "events":["ALL"],
+         "startDate":"2017-08-15",
+         "takenEndDate":"2017-08-23",
+         "endDate":"2017-08-17",
+         "takenStartDate":"2017-08-23"
+     }
+     #+END_SRC
+     A list of redcap subject_ids and 'redcap_event's which filter down the files 
+     to the ones that are associated with the selected subjects and events.
+
+     startDate and endDate denote clamps for the date uploaded.
+     takenStartDate and takenEndDate denote clamps for the date the image was taken
+    
 *** TODO Metadata.json that contains the image info
+    This will contain metadata about the images from polyjuice. Additionally, we will
+    include the url that was used to download the images so it can be reused in the future.
+*** TODO Zip multiple files
+    All files that are valid according to the url params in /api/batch_download will
+    be zipped up and returned.
 *** TODO Upload zip
+    Call flask sendfile with the zipped directory that we have generated.
+
+** Front end

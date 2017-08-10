@@ -13,9 +13,9 @@ window.staticData = {
     takenDateHeading: 'Image Taken Date',
     takenDateHelpText: 'Images taken before the start date or after the end date will not be selected.',
     subjectHeading: 'Subject ID',
-    subjectHelpText: 'Select multiple by using the shift or the control or command key.',
+    subjectHelpText: 'Select multiple by using the shift or the control or command key. ALL selects all subjects.',
     eventHeading: 'Redcap Events',
-    eventHelpText: 'Select multiple by using the shift or the control or command key.',
+    eventHelpText: 'Select multiple by using the shift or the control or command key. ALL selects all events.',
 };
 
 var BatchInput = React.createClass({
@@ -226,14 +226,32 @@ var BatchSummary = React.createClass({
         Utils.api_get_json(url);
     },
     render: function() {
+        var uploadStart = this.props.formData.startDate || 'the beginning of time',
+            uploadEnd = this.props.formData.endDate || 'present day',
+            takenStart = this.props.formData.takenStartDate || 'the beginning of time',
+            takenEnd = this.props.formData.takenEndDate || 'present day';
+
         return(
             <div id="batch-summary">
-                summary: query = {this.props.query}
+                <p className="summary-group">
+                    The following subjects' data will be included in your batch:
+                        {' ' + this.props.formData.subjects.join(',') + '.'}
+                </p>
+                <p className="summary-group">
+                    The following events' data will be included in your batch:
+                        {' ' + this.props.formData.events.join(', ') + '.'}
+                </p>
+                <p className="summary-group">
+                    The files downloaded will have been uploaded from {uploadStart} to {uploadEnd}.
+                </p>
+                <p className="summary-group">
+                    The files downloaded will have been created from {takenStart} to {takenEnd}.
+                </p>
                 <button
-                    className='btn'
-                    onClick={this.props.toggle.bind(this)}>Back</button>
+                    className='btn batch-finalize'
+                    onClick={this.props.toggle.bind(this)}>Edit Batch</button>
                 <button
-                    className='btn'
+                    className='btn batch-finalize'
                     onClick={this.download.bind(this, this.props.query)}>Download</button>
             </div>
         );
@@ -278,7 +296,7 @@ var Page = React.createClass({
                         <BatchForm toggle={this.toggle} update={ this.updateForm } formData={this.state.formData}/>
                     </div>
                     <div className={batchSummaryClasses}>
-                        <BatchSummary toggle={this.toggle} query={this.state.query}/>
+                        <BatchSummary toggle={this.toggle} query={this.state.query} formData={this.state.formData}/>
                     </div>
                 </div>
         );
