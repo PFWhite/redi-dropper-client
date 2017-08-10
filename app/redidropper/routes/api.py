@@ -217,6 +217,15 @@ def download_file():
     LogEntity.file_downloaded(session['uuid'], file_path)
     return send_file(file_path, as_attachment=True)
 
+def get_all_files():
+    """
+    Returns all SubjectFiles with the redcap_event and subject redcap id attached
+    """
+    return db.session.query(SubjectFileEntity,
+                            EventEntity.redcap_event,
+                            SubjectEntity.redcap_id).join(EventEntity).join(SubjectEntity)
+
+
 @app.route('/api/batch_download', methods=['GET'])
 @login_required
 def api_batch_download():
@@ -228,18 +237,50 @@ def api_batch_download():
     """
     # get url params
     params = request.args
-    print params
+    query = params.get('q')
+    import json
+    params = json.loads(query)
+    print(query)
+
     # find matching files
-    paths = SubjectFileEntity.get_matching_paths(**params)
+    all_files, events, subjects = zip(*get_all_files().all())
+    # print(all_files, events, subjects)
+    # # filter subjects
+    # filtered = []
+    # subjects = params.get('subjects')
+    # if not ('ALL' in subjects) or len(subjects):
+    #     for subj in subjects:
+    #         for item in all_files:
+    #             if subj == item.redcap_id:
+    #                 filtered.append(item)
+    # # filter events
+    # eventsFiltered = []
+    # events = params.get('events')
+    # if not ('ALL' in events) or len(events):
+    #     for evt in events:
+    #         for item in filtered:
+    #             if evt == item.redcap_event:
+    #                 eventsFiltered.append(item)
+    # # filter upload date
+
+
     # write summary metadata file
-    metadata = {
-        'url_parameters': params,
-    }
+    now = str(datetime.now()).replace(' ', '_')
+    paths = [subfile.get_full_path(app.config['REDIDROPPER_UPLOAD_SAVED_DIR']) for subfile in all_files]
+    print(paths)
+    meta_path = '/tmp/download_metadata-' + str(now) + '.json'
+    paths.append(meta_path)
+    with open(meta_path, 'w') as mfile:
+        mfile.write(json.dumps({
+            'url_parameters': params,
+        }))
+
     # zip files into tmp
-    zip_path = '/tmp/batch_download-' + str(datetime.datetime.now()) + '.zip'
+    zip_path = '/tmp/batch_download-' + str(now) + '.zip'
+    import zipfile
     with zipfile.ZipFile(zip_path, 'w') as myzip:
         for path in paths:
-            myzip.write(f)
+            myzip.write(path)
     # log steps
     # send zip
     return send_file(zip_path, as_attachment=True)
@@ -248,7 +289,7 @@ def api_batch_download():
 @login_required
 def all_files_info():
     """ Get the list of all uploaded files and their path """
-    all_files = db.session.query(SubjectFileEntity,EventEntity.redcap_event,SubjectEntity.redcap_id).join(EventEntity).join(SubjectEntity)
+    all_files = get_all_files()
     return_list = [__build_files_info_json(subject_file,event,subject) for subject_file,event,subject in all_files]
     return utils.jsonify_success({'list_of_files' : return_list})
 

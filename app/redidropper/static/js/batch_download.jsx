@@ -120,14 +120,14 @@ var BatchForm = React.createClass({
             queryParams = ['per_page=1000'].join('&');
         $.getJSON(window.origin + '/api/list_local_subjects?' + queryParams, function(data) {
             var subjects = data.data.list_of_subjects.map(function(item) {return item.redcap_id});
-            subjects.unshift('ALL');
+            subjects.sort().unshift('ALL');
             self.setState({
                 subjects: subjects
             });
         });
         $.getJSON(window.origin + '/api/list_events', function(data) {
             var events = data.data.events.map(function(item) {return item.redcap_event});
-            events.unshift('ALL');
+            events.sort().unshift('ALL');
             self.setState({
                 events: events
             });
@@ -262,7 +262,7 @@ var BatchSummary = React.createClass({
 var Page = React.createClass({
     getInitialState: function() {
         var formData = window.location.hash.slice(1,window.location.hash.length);
-        formData = formData || "{}";
+        formData = formData || '{"subjects":["ALL"],"events":["ALL"]}';
         return {
             activePanel: 0,
             formData: JSON.parse(formData),

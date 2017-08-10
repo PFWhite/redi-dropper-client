@@ -46,10 +46,6 @@ class SubjectFileEntity(db.Model, CRUDMixin):
         return success
 
     @classmethod
-    def get_matching_paths(**kwargs):
-        pass
-
-    @classmethod
     def get_convention_file_name(cls, date_and_time, subject_id, file_name):
         """
         Concatenate the pieces to obtain a fiendly file name.

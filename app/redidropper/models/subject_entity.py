@@ -50,10 +50,3 @@ class SubjectEntity(db.Model, CRUDMixin):
                 self.last_checked_at),
             'was_deleted': self.was_deleted
         }
-
-    @staticmethod
-    def get_matching_paths(**params):
-        """
-        Takes url parameters and returns files that match them
-        """
-        pass
