@@ -9,7 +9,9 @@ Goal: Delegate requests to the `/api` path to the appropriate controller
   Taeber Rapczak          <taeber@ufl.edu>
 """
 
-# import math
+import os
+import json
+import zipfile
 from datetime import datetime
 import collections
 
@@ -242,51 +244,61 @@ def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
         all_files = all_files.filter(SubjectFileEntity.uploaded_at <= startDate)
     return all_files
 
+def clean_old_files(root, test_string='download'):
+    # two days, 24 hours, 60 min, 60 sec
+    too_old = 2 * 24 * 60 * 60
+    for root, dirs, files in os.walk(root):
+        for path in files:
+            if test_string in path:
+                if os.stat(os.path.join(root, path)).st_mtime > too_old:
+                    os.remove(os.path.join(root, path))
+                    LogEntity.file_deleted(session['uuid'], os.path.join(root, path))
+
+
 @app.route('/api/batch_download', methods=['GET', 'POST'])
 @login_required
 def api_batch_download():
     """
     Uses the url args to find matching files. Then downloads a
-    zipfile containing those files
+    zipfile containing those files.
+    Also will generate a metadata file for the end user that has
+    information about the file
 
     TODO: configurable tmp directory
     """
-    # get url params
-    params = request.args
-    query = params.get('q')
-    import json
+    clean_old_files('/tmp')
+
+    query = request.args.get('q')
     params = json.loads(query)
-    print(query)
 
     try:
         all_files, events, subjects = zip(*__get_matching_batch(**params))
     except ValueError as ex:
         return utils.jsonify_error(params, 404)
 
-    # write summary metadata file
+    # metadata file generation
     now = str(datetime.now()).replace(' ', '_')
     paths = [subfile.get_full_path(app.config['REDIDROPPER_UPLOAD_SAVED_DIR']) for subfile in all_files]
-    meta_path = '/tmp/download_metadata-' + str(now) + '.json'
+    meta_path = '/tmp/download_metadata-' + now + '.json'
     paths.append(meta_path)
     with open(meta_path, 'w') as mfile:
-        mfile.write(json.dumps({
+        json.dump({
             'url_parameters': params,
-        }))
+            'files': [f.serialize() for f in all_files]
+        }, mfile, indent=4, sort_keys=True)
 
     # zip files into tmp
     zip_path = '/tmp/batch_download-' + str(now) + '.zip'
-    import zipfile
     with zipfile.ZipFile(zip_path, 'w') as myzip:
         for path in paths:
-            myzip.write(path)
+            myzip.write(path, os.path.basename(path))
+
     # log steps
+    LogEntity.batch_generated(session['uuid'], zip_path)
+
     # send zip
-    import os
     filename = os.path.split(zip_path)[1]
     res = send_file(zip_path, as_attachment=True)
-    res.content_type = 'application/octet-stream'
-    res.headers['Content-Disposition'] = res.headers['Content-Disposition'].replace('"', '')
-    res.headers['Content-Disposition'] = res.headers['Content-Disposition'].replace(':', '-')
     return res
 
 @app.route("/api/all_files_info", methods=['GET'])

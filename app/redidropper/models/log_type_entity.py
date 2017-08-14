@@ -15,7 +15,7 @@ LOG_TYPE_ACCOUNT_MODIFIED = 'account_modified'
 LOG_TYPE_REDCAP_SUBJECTS_IMPORTED = 'redcap_subjects_impported'
 LOG_TYPE_REDCAP_EVENTS_IMPORTED = 'redcap_events_imported'
 LOG_TYPE_ACCOUNT_UPDATED = 'account_updated'
-# LOG_TYPE_ = ''
+LOG_TYPE_BATCH_GENERATED = 'batch_generated'
 
 
 class LogTypeEntity(db.Model, CRUDMixin):

@@ -224,6 +224,7 @@ var BatchSummary = React.createClass({
     download: function(data) {
         var url = window.location.origin + '/api/batch_download?q=' + data;
         window.location = url;
+        this.props.toggle();
     },
     render: function() {
         var uploadStart = this.props.formData.startDate || 'the beginning of time',

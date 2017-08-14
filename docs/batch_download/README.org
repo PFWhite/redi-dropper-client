@@ -6,7 +6,8 @@ based on varying criteria like time taken, event they are tied to etc.
 ** Front end
 Need new page and various components for selecting the various tunable things.
 ** Back end
-*** TODO New route
+*** DONE New route
+    CLOSED: [2017-08-14 Mon 14:01]
     Two new routes were implemented: /batch_download and /api/batch_download.
     The first is in users.py where all pages that load web gui goes and the 
     second is in the api.py file
@@ -31,13 +32,29 @@ Need new page and various components for selecting the various tunable things.
      startDate and endDate denote clamps for the date uploaded.
      takenStartDate and takenEndDate denote clamps for the date the image was taken
     
-*** TODO Metadata.json that contains the image info
+*** DONE Metadata.json that contains the image info
+    CLOSED: [2017-08-14 Mon 14:01]
     This will contain metadata about the images from polyjuice. Additionally, we will
     include the url that was used to download the images so it can be reused in the future.
-*** TODO Zip multiple files
+
+    This metadata will stored in the database in a column called 'dicomTagsMetaData'
+*** DONE Zip multiple files
+    CLOSED: [2017-08-14 Mon 14:01]
     All files that are valid according to the url params in /api/batch_download will
     be zipped up and returned.
-*** TODO Upload zip
-    Call flask sendfile with the zipped directory that we have generated.
 
+    if there are no files returned, a 404 error is returned
+*** DONE Log the activity
+    CLOSED: [2017-08-14 Mon 14:36]
+    We need to log what we are doing to the database
+*** DONE Upload zip
+    CLOSED: [2017-08-14 Mon 14:01]
+    Call flask sendfile with the zipped directory that we have generated.
+*** DONE clean up the tmp directory every now and then
+    CLOSED: [2017-08-14 Mon 14:07]
+    This is done by modifying the TMPTIME variable to something other than
+    -1. This is the number of days until things in the tmp folder should be deleted
+
+    Every file over 2 days old will be deleted, see routes/api/clean_old_files
 ** Front end
+   Development done in batch_download.jsx. Numerous front end components made.
