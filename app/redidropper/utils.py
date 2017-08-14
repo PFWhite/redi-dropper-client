@@ -175,9 +175,12 @@ def pack_error(msg):
     return pack({'status': 'error', 'message': msg})
 
 
-def jsonify_error(data):
+def jsonify_error(data, status_code=None):
     """ Format an error message to be json-friendly """
-    return jsonify({'status': 'error', 'data': data})
+    res = jsonify({'status': 'error', 'data': data})
+    if status_code:
+        res.status_code = status_code
+    return res
 
 
 def jsonify_success(data):

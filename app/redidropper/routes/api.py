@@ -225,8 +225,24 @@ def get_all_files():
                             EventEntity.redcap_event,
                             SubjectEntity.redcap_id).join(EventEntity).join(SubjectEntity)
 
+def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
+                         endDate=None, takenStartDate=None, takenEndDate=None):
+    """
+    This is used with batch downloading to filter out the files that
+    dont match what is passed
+    """
+    all_files = get_all_files()
+    if not 'ALL' in subjects:
+        all_files = all_files.filter(SubjectEntity.redcap_id.in_(subjects))
+    if not 'ALL' in events:
+        all_files = all_files.filter(EventEntity.redcap_event.in_(events))
+    if startDate:
+        all_files = all_files.filter(SubjectFileEntity.uploaded_at >= startDate)
+    if endDate:
+        all_files = all_files.filter(SubjectFileEntity.uploaded_at <= startDate)
+    return all_files
 
-@app.route('/api/batch_download', methods=['GET'])
+@app.route('/api/batch_download', methods=['GET', 'POST'])
 @login_required
 def api_batch_download():
     """
@@ -242,32 +258,14 @@ def api_batch_download():
     params = json.loads(query)
     print(query)
 
-    # find matching files
-    all_files, events, subjects = zip(*get_all_files().all())
-    # print(all_files, events, subjects)
-    # # filter subjects
-    # filtered = []
-    # subjects = params.get('subjects')
-    # if not ('ALL' in subjects) or len(subjects):
-    #     for subj in subjects:
-    #         for item in all_files:
-    #             if subj == item.redcap_id:
-    #                 filtered.append(item)
-    # # filter events
-    # eventsFiltered = []
-    # events = params.get('events')
-    # if not ('ALL' in events) or len(events):
-    #     for evt in events:
-    #         for item in filtered:
-    #             if evt == item.redcap_event:
-    #                 eventsFiltered.append(item)
-    # # filter upload date
-
+    try:
+        all_files, events, subjects = zip(*__get_matching_batch(**params))
+    except ValueError as ex:
+        return utils.jsonify_error(params, 404)
 
     # write summary metadata file
     now = str(datetime.now()).replace(' ', '_')
     paths = [subfile.get_full_path(app.config['REDIDROPPER_UPLOAD_SAVED_DIR']) for subfile in all_files]
-    print(paths)
     meta_path = '/tmp/download_metadata-' + str(now) + '.json'
     paths.append(meta_path)
     with open(meta_path, 'w') as mfile:
@@ -283,7 +281,13 @@ def api_batch_download():
             myzip.write(path)
     # log steps
     # send zip
-    return send_file(zip_path, as_attachment=True)
+    import os
+    filename = os.path.split(zip_path)[1]
+    res = send_file(zip_path, as_attachment=True)
+    res.content_type = 'application/octet-stream'
+    res.headers['Content-Disposition'] = res.headers['Content-Disposition'].replace('"', '')
+    res.headers['Content-Disposition'] = res.headers['Content-Disposition'].replace(':', '-')
+    return res
 
 @app.route("/api/all_files_info", methods=['GET'])
 @login_required

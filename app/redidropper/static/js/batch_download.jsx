@@ -223,7 +223,7 @@ var BatchForm = React.createClass({
 var BatchSummary = React.createClass({
     download: function(data) {
         var url = window.location.origin + '/api/batch_download?q=' + data;
-        Utils.api_get_json(url);
+        window.location = url;
     },
     render: function() {
         var uploadStart = this.props.formData.startDate || 'the beginning of time',

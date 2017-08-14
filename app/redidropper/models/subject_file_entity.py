@@ -108,3 +108,4 @@ class SubjectFileEntity(db.Model, CRUDMixin):
             'user_id': self.user_id,
             'user_name': self.user.get_name()
         }
+
