@@ -222,9 +222,19 @@ var BatchForm = React.createClass({
 
 var BatchSummary = React.createClass({
     download: function(data) {
-        var url = window.location.origin + '/api/batch_download?q=' + data;
-        window.location = url;
-        this.props.toggle();
+        var url = window.location.origin + '/api/batch_download?q=' + data,
+            self = this;
+        $.ajax({
+            url: url,
+            method: 'HEAD',
+            success: function () {
+                window.location = url;
+            },
+            error: function () {
+                self.props.toggle();
+                alert('No matching files found, please adjust your batch parameters.');
+            }
+        });
     },
     render: function() {
         var uploadStart = this.props.formData.startDate || 'the beginning of time',

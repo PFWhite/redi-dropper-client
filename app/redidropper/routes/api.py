@@ -242,6 +242,10 @@ def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
         all_files = all_files.filter(SubjectFileEntity.uploaded_at >= startDate)
     if endDate:
         all_files = all_files.filter(SubjectFileEntity.uploaded_at <= startDate)
+    if takenStartDate:
+        all_files = all_files.filter(SubjectFileEntity.imagingDate >= startDate)
+    if takenEndDate:
+        all_files = all_files.filter(SubjectFileEntity.imagingDate <= startDate)
     return all_files
 
 def clean_old_files(root, test_string='download'):
@@ -255,7 +259,7 @@ def clean_old_files(root, test_string='download'):
                     LogEntity.file_deleted(session['uuid'], os.path.join(root, path))
 
 
-@app.route('/api/batch_download', methods=['GET', 'POST'])
+@app.route('/api/batch_download', methods=['GET', 'HEAD'])
 @login_required
 def api_batch_download():
     """
@@ -281,11 +285,15 @@ def api_batch_download():
     paths = [subfile.get_full_path(app.config['REDIDROPPER_UPLOAD_SAVED_DIR']) for subfile in all_files]
     meta_path = '/tmp/download_metadata-' + now + '.json'
     paths.append(meta_path)
+    metadata = {
+        'url_parameters': params,
+        'files': [f.serialize() for f in all_files]
+    }
+    if request.method == 'HEAD':
+        return utils.jsonify_success(metadata)
+
     with open(meta_path, 'w') as mfile:
-        json.dump({
-            'url_parameters': params,
-            'files': [f.serialize() for f in all_files]
-        }, mfile, indent=4, sort_keys=True)
+        json.dump(metadata, mfile, indent=4, sort_keys=True)
 
     # zip files into tmp
     zip_path = '/tmp/batch_download-' + str(now) + '.zip'

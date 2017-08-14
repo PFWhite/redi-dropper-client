@@ -24,6 +24,8 @@ class SubjectFileEntity(db.Model, CRUDMixin):
     file_metadata = db.Column("dicomTagsMetadata", db.Text, nullable=False)
     uploaded_at = db.Column("sfUploadedAt", db.DateTime, nullable=False,
                             server_default='0000-00-00 00:00:00')
+    imaged_at = db.Column("imagingDate", db.DateTime, nullable=False,
+                            server_default='0000-00-00 00:00:00')
     user_id = db.Column("usrID", db.Integer, db.ForeignKey('User.usrID'),
                         nullable=False)
 
