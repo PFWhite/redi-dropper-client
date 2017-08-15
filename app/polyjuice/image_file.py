@@ -42,11 +42,11 @@ class ImageFile(object):
 
     def load_into_dropper_db(self):
         self.conn.query("""
-        SELECT sbjID from Subject where sbjRedcapID = '{}';
+        SELECT sbjID from Subject where sbjRedcapID = "{}";
         """.format(self.data.ptid))
         sbjID = self.conn.store_result()
         self.conn.query("""
-        SELECT evtID from Event where evtRedcapEvent = '{}';
+        SELECT evtID from Event where evtRedcapEvent = "{}";
         """.format(self.data.redcap_event_name))
         evtID = self.conn.store_result()
         self.conn.query(self._build_update(sbjID, evtID))
@@ -54,8 +54,8 @@ class ImageFile(object):
     def _build_update(self, subject_id, event_id):
         return """
         UPDATE SubjectFile
-        SET tagsJSON = {json},
-        WHERE sbjID = {subject_id} and evtID = {event_id} and sfFileChecksum = {checksum};
+        SET dicomTagsMetadata = "{json}",
+        WHERE sbjID = "{subject_id}" and evtID = "{event_id}" and sfFileChecksum = "{checksum}";
         """.format(**{
             'json': self.json,
             'subject_id': subject_id,
