@@ -120,6 +120,13 @@ var AdminUsersRow = React.createClass({
                               .show().delay(1000).fadeOut('slow');
         });
     },
+
+    genToken: function(id) {
+        var res = Utils.api_post_json('/api/gen_token', {user_id: id});
+        res.success(function(token) {
+            prompt('Please copy the token, this cannot be recovered.', token.data)
+        })
+    },
     expireAccount: function() {
         var record = this.state.record;
         var _this = this;
@@ -247,6 +254,13 @@ var AdminUsersRow = React.createClass({
                             <td className="text-center">{expireButton}</td>
                             <td className="text-center">{deactivateButton}</td>
                             <td className="text-center">{editButton}</td>
+                            <td className="text-center">
+                                <button className="btn btn-primary"
+                                        data_toggle="tooltip"
+                                        title="Generate a new token for api calls"
+                                        onClick={this.genToken.bind(this, record.id)}
+                                >Gen Token</button>
+                            </td>
                         </tr>
             );
     }
@@ -295,6 +309,7 @@ var AdminUsersTable = React.createClass({
                     <th className="text-center">Account Expiration</th>
                     <th className="text-center">Account Status</th>
                     <th className="text-center">Update User</th>
+                    <th className="text-center">Generate Token</th>
                 </tr>
             </thead>
             <tbody>

@@ -12,4 +12,4 @@ VALUES
 ('token_auth_authenticated','Someone used a token to log in');
 
 ALTER TABLE User
-  ADD COLUMN tokenHash char(64) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT '';
+  ADD COLUMN tokenHash varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT '';

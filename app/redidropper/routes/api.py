@@ -12,6 +12,8 @@ Goal: Delegate requests to the `/api` path to the appropriate controller
 import os
 import json
 import zipfile
+import random
+import string
 from datetime import datetime
 import collections
 
@@ -351,6 +353,20 @@ def __assign_roles(roles_required, user):
     user_roles = [role for role in all_roles if role.name in roles_required]
     user = UserEntity.update(user, roles=user_roles)
     return user
+
+@app.route('/api/gen_token', methods=['POST'])
+@login_required
+def generate_token():
+    user_id = request.form.get('user_id')
+    user = UserEntity.get_by_id(user_id)
+    if user:
+        token = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(32))
+        creds = UserEntity.generate_credentials(user.email, token)
+        user.token_hash = creds['password_hash']
+        user.update()
+        return utils.jsonify_success(token)
+    else:
+        return utils.jsonify_error('No user found', 404)
 
 @app.route('/api/save_user', methods=['POST'])
 @login_required

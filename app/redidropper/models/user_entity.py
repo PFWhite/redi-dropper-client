@@ -68,11 +68,13 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
         Looks to see if the hashed token exists in the tokenHash column
         utilizes the same credential generation function
         """
+        print(self.token_hash, token)
         if self.token_hash == '':
             return false
         else:
             creds = self.generate_credentials(self.email, token)
             token_hash = creds['password_hash']
+            print(token, token_hash, self.token_hash)
             return token_hash == self.token_hash
 
 
@@ -140,7 +142,7 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
         }
 
     @classmethod
-    def is_existing(email):
+    def is_existing(self, email):
         """
         :rtype boolean
         :return True if a user exists in the database with the given email
@@ -152,7 +154,7 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
             return False
 
     @classmethod
-    def generate_credentials(email, password=None):
+    def generate_credentials(self, email, password=None):
         # TODO: Add support for reading a password field
         # the following is a hack to support the old way
         # of not generating a hash from the password which

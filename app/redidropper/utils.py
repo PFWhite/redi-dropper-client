@@ -86,6 +86,7 @@ def generate_auth(pepper, password):
     Note: requires a request context.
     """
     salt = _create_salt()
+    print(password)
     password_hash = _generate_sha512_hmac(pepper, salt, password)
     return (salt, password_hash)
 

@@ -333,24 +333,8 @@ def on_identity_loaded(sender, identity):
             # app.logger.debug("Provide role: {}".format(role))
             identity.provides.add(RoleNeed(role.name))
 
-def __basic_auth(req):
-    """
-    Implements the retrieval of basic auth credentials from the passed
-    request. Currently this is used with a token and not the actual
-    password.
 
-    Important to note is that the pashhash is not used here
-    """
-    auth = req.headers.get('Authorization')
-    if auth:
-        b64 = api_key.replace('Basic ', '', 1)
-        try:
-            return email, password = base64.b64decode().split(':')
-        except TypeError:
-            pass
-
-
-@login_manager.token_auth
+@login_manager.request_loader
 def token_auth(req):
     """
     Uses a basic auth type scheme for api usage. Instead of a password
@@ -360,14 +344,17 @@ def token_auth(req):
     This token should be tied to the user in that if the user doesnt exist
     or is inactive due to expiry, this login scheme should not work
     """
-    email, token = __basic_auth(request)
-
+    email = request.authorization.get('username')
+    token = request.authorization.get('password')
+    print(email, token)
     user, error_code = __check_user(email)
+    print(user)
     if error_code:
         # if this were a middleware we would return 403 at this point
         return None
 
     valid_token = user.check_token(token)
+    print(valid_token)
 
     if valid_token:
         return user
