@@ -1,20 +1,11 @@
 #batch-page {
     position: relative;
-    height: 100vh;
     overflow-y: scroll;
+    margin-bottom: 40px;
 }
 
-#batch-page .panel {
-    position: absolute;
-    top: 0;
-    bottom: 0;
-    right: 0;
-    left: 0;
-    z-index: 0;
-}
-
-#batch-page .panel.active {
-    z-index: 10;
+#batch-page .inactive {
+    display: none;
 }
 
 #batch-page .batch-form-group {

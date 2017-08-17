@@ -298,11 +298,10 @@ var Page = React.createClass({
     },
 
     render: function() {
-        var batchFormClasses = 'panel' + ( this.state.activePanel === 0 ? ' active' : '' ),
-            batchSummaryClasses = 'panel' + ( this.state.activePanel === 1 ? ' active' : '' );
+        var batchFormClasses = '' + ( this.state.activePanel != 0 ? ' inactive' : '' ),
+            batchSummaryClasses = '' + ( this.state.activePanel != 1 ? ' inactive' : '' );
         return(
                 <div id='batch-page'>
-                    <h2>container</h2>
                     <div className={batchFormClasses}>
                         <BatchForm toggle={this.toggle} update={ this.updateForm } formData={this.state.formData}/>
                     </div>
