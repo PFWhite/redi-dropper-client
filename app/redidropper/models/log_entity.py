@@ -146,6 +146,11 @@ class LogEntity(db.Model, CRUDMixin):
         LogEntity._log(LOG_TYPE_BATCH_GENERATED, session_id, details)
 
     @staticmethod
+    def token_auth_attempted(session_id, details=''):
+        """ Log it """
+        LogEntity._log(LOG_TYPE_TOKEN_AUTH_AUTHENTICATED, session_id, details)
+
+    @staticmethod
     def redcap_events_imported(session_id, details=''):
         """ Log it """
         LogEntity._log(LOG_TYPE_REDCAP_EVENTS_IMPORTED, session_id, details)

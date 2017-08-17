@@ -8,4 +8,8 @@ ALTER TABLE SubjectFile
 INSERT INTO LogType
 (logtType, logtDescription)
 VALUES
-('batch_generated','Event runs when a zip file is generated for a batch download');
+('batch_generated','Event runs when a zip file is generated for a batch download'),
+('token_auth_authenticated','Someone used a token to log in');
+
+ALTER TABLE User
+  ADD COLUMN tokenHash char(64) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT '';

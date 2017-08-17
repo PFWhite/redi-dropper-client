@@ -102,11 +102,11 @@ def get_user_links():
                  pages['batch_download'],
                  pages['logs']]
     elif ROLE_TECHNICIAN == role:
-        links = [pages['upload_files'], pages['dashboard']]
+        links = [pages['batch_download'],pages['upload_files'], pages['dashboard']]
     elif ROLE_RESEARCHER_ONE == role:
-        links = [pages['res_one']]
+        links = [pages['batch_download'],pages['res_one']]
     elif ROLE_RESEARCHER_TWO == role:
-        links = [pages['res_two']]
+        links = [pages['batch_download'],pages['res_two']]
 
     links.append(pages['logout'])
     return links

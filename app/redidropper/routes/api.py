@@ -342,19 +342,6 @@ def __get_date_information():
         "access_expires_at": utils.get_expiration_date(180),
     }
 
-def __generate_credentials(email):
-    # @TODO: use a non-gatorlink password here
-    password = email
-    salt, password_hash = utils.generate_auth(app.config['SECRET_KEY'],
-                                              password)
-    # Note: we store the salt as a prefix
-    return {
-        "email": email,
-        "salt": salt,
-        "password_hash": password_hash,
-    }
-
-
 def __assign_roles(roles_required, user):
     """
     Delete all roles for the user if not in the
@@ -365,19 +352,6 @@ def __assign_roles(roles_required, user):
     user = UserEntity.update(user, roles=user_roles)
     return user
 
-
-def __check_is_existing_user(email):
-    """
-    :rtype boolean
-    :return True if a user exists in the database with the given email
-    """
-    try:
-        existing_user = UserEntity.query.filter_by(email=email).one()
-        return True
-    except:
-        return False
-
-
 @app.route('/api/save_user', methods=['POST'])
 @login_required
 @perm_admin.require(http_exception=403)
@@ -386,10 +360,10 @@ def api_save_user():
     TODO: Add support for reading a password field
     """
     request_data = __extract_user_information(request)
-    credentials = __generate_credentials(request_data["email"])
+    credentials = UserEntity.generate_credentials(request_data["email"])
     date_data = __get_date_information()
 
-    if __check_is_existing_user(request_data["email"]):
+    if UserEntity.is_existing(request_data["email"]):
         return utils.jsonify_error(
             {'message': 'Sorry. This email is already taken.'})
 
@@ -418,7 +392,7 @@ def api_edit_user():
     TODO: Add support for reading a password field
     """
     request_data = __extract_user_information(request)
-    credentials = __generate_credentials(request_data["email"])
+    credentials = UserEntity.generate_credentials(request_data["email"])
     date_data = __get_date_information()
 
     user = UserEntity.get_by_id(id=request_data["usr_id"])
