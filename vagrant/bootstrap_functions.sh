@@ -74,21 +74,20 @@ function install_dropper() {
         log "Execute sql: db/000/upgrade.sql"
         mysql < db/000/upgrade.sql
         log "Execute sql: db/001/upgrade.sql"
-        mysql ctsi_dropper_s   < db/001/upgrade.sql
+        mysql ctsi_dropper_s < db/001/upgrade.sql
         log "Execute sql: db/002/upgrade.sql"
-        mysql ctsi_dropper_s   < db/002/upgrade.sql
+        mysql ctsi_dropper_s < db/002/upgrade.sql
         log "Execute sql: db/002/data.sql"
-        mysql ctsi_dropper_s   < db/002/data.sql
+        mysql ctsi_dropper_s < db/002/data.sql
         log "Execute sql: db/003/upgrade.sql"
-        mysql ctsi_dropper_s   < db/003/upgrade.sql
+        mysql ctsi_dropper_s < db/003/upgrade.sql
         log "Execute sql: db/004/upgrade.sql"
-        mysql ctsi_dropper_s   < db/004/upgrade.sql
-	      log "Execute sql: db/005/upgrade.sql"
-        mysql ctsi_dropper_s   < db/005/upgrade.sql
-	      log "Execute sql: db/006/upgrade.sql"
-        mysql ctsi_dropper_s   < db/006/upgrade.sql
-	
-	
+        mysql ctsi_dropper_s < db/004/upgrade.sql
+        log "Execute sql: db/005/upgrade.sql"
+        mysql ctsi_dropper_s < db/005/upgrade.sql
+        log "Execute sql: db/006/upgrade.sql"
+        mysql ctsi_dropper_s < db/006/upgrade.sql
+
         log "Stop apache in order to disable the default site"
         service apache2 stop
         a2dissite 000-default

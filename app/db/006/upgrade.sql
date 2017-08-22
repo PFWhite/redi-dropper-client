@@ -9,7 +9,8 @@ INSERT INTO LogType
 (logtType, logtDescription)
 VALUES
 ('batch_generated','Event runs when a zip file is generated for a batch download'),
-('token_auth_authenticated','Someone used a token to log in');
+('token_generated','Event runs when an admin creates a token for a user to use token auth'),
+('token_auth_attempted','Someone attempted to use a token to log in');
 
 ALTER TABLE User
   ADD COLUMN tokenHash varchar(255) CHARACTER SET utf8 COLLATE utf8_unicode_ci DEFAULT '',

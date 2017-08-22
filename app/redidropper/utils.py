@@ -71,9 +71,6 @@ def _generate_sha512_hmac(pepper, salt, data):
         pepper: the global application key
         salt:   the 128bit (16bytes) obtained from sha256(rand:ip:agent)
         data:   the data to be protected
-
-    from passlib.context import CryptContext
-    self.password_crypt_context = CryptContext(schemes='bcrypt')
     """
     payload = '{}:{}'.format(salt.encode('utf-8'), data.encode('utf-8'))
     return base64.b64encode(hmac.new(pepper, payload, sha512).digest())

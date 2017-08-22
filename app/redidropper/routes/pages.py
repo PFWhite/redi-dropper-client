@@ -34,6 +34,7 @@ from flask_principal import \
 from redidropper.main import app
 from redidropper import utils
 from redidropper.models.user_entity import UserEntity
+from redidropper.models.log_entity import LogEntity
 
 # set the login manager for the app
 login_manager = LoginManager(app)
@@ -347,7 +348,8 @@ def token_auth(req):
     This token should be tied to the user in that if the user doesnt exist
     or is inactive due to expiry, this login scheme should not work
     """
-    # print(dir(req))
+    LogEntity.token_auth_attempted(session['uuid'],
+                                   'Authorization passed: {}'.format(str(request.authorization or {})))
     if request.authorization:
         email = request.authorization.get('username')
         token = request.authorization.get('password')

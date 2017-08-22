@@ -270,6 +270,11 @@ def api_batch_download():
     Also will generate a metadata file for the end user that has
     information about the file
 
+    The GET route will download the file where as the HEAD will return
+    just the metadata of the files that would be downloaded with GET
+
+    NOTE: Calling this route deletes old stuff from the tmp
+    directory
     TODO: configurable tmp directory
     """
     clean_old_files('/tmp')
@@ -366,6 +371,8 @@ def generate_token():
         user.token_hash = creds['password_hash']
         user.token_salt = creds['salt']
         user.update()
+        LogEntity.token_generated(session['uuid'],
+                                  '{} created a token for {}'.format(current_user, user.email))
         return utils.jsonify_success(token)
     else:
         return utils.jsonify_error('No user found', 404)

@@ -160,8 +160,8 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
     def check_token(self, token):
         """
         Looks to see if the hashed token exists in the tokenHash column
-        utilizes the same credential generation function except that the
-        token hash and token salt are in different columns
+        utilizes the same helper function the credential generation function
+        uses.
         """
         if self.token_hash == '':
             return false

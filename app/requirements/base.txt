@@ -8,4 +8,4 @@ Flask-WTF==0.10.2
 MySQL-python==1.2.5
 WTForms==2.0.2
 pytz==2015.4
--e git+https://github.com/pfwhite/cappy@7824ef278dd47b61efe01320409988230807642a#egg=cappy-master
+-e git+https://github.com/ctsit/cappy@7824ef278dd47b61efe01320409988230807642a#egg=cappy-master
