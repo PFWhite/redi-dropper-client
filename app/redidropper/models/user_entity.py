@@ -42,7 +42,9 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
                                   server_default='0000-00-00 00:00:00')
     password_hash = db.Column("usrPasswordHash", db.String(255),
                               nullable=False, server_default='')
-    token_hash = db.Column("tokenHash", db.String(64),
+    token_hash = db.Column("tokenHash", db.String(255),
+                           nullable=True, server_default='')
+    token_salt = db.Column("tokenSalt", db.String(255),
                            nullable=True, server_default='')
 
     # @OneToMany
@@ -63,19 +65,6 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
         if you expect more than a handful of items for this relationship.
     """
 
-    def check_token(self, token):
-        """
-        Looks to see if the hashed token exists in the tokenHash column
-        utilizes the same credential generation function
-        """
-        print(self.token_hash, token)
-        if self.token_hash == '':
-            return false
-        else:
-            creds = self.generate_credentials(self.email, token)
-            token_hash = creds['password_hash']
-            print(token, token_hash, self.token_hash)
-            return token_hash == self.token_hash
 
 
     def is_active(self):
@@ -162,12 +151,25 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
         password = password or email
         salt, password_hash = utils.generate_auth(app.config['SECRET_KEY'],
                                                   password)
-        # Note: we store the salt as a prefix
         return {
             "email": email,
             "salt": salt,
             "password_hash": password_hash,
         }
+
+    def check_token(self, token):
+        """
+        Looks to see if the hashed token exists in the tokenHash column
+        utilizes the same credential generation function except that the
+        token hash and token salt are in different columns
+        """
+        if self.token_hash == '':
+            return false
+        else:
+            return utils.is_valid_auth(app.config['SECRET_KEY'],
+                                       self.token_salt,
+                                       token,
+                                       self.token_hash)
 
     def __repr__(self):
         return "<UserEntity (usrID: {0.id}, usrEmail: {0.email}, " \

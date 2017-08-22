@@ -63,7 +63,8 @@ def _create_salt():
 
 
 def _generate_sha512_hmac(pepper, salt, data):
-    """ Generate the SHA512 HMAC -- for compatibility with Flask-Security
+    """
+    Generate the SHA512 HMAC -- for compatibility with Flask-Security
     h = HMAC(pepper, salt+data)
 
     Where
@@ -71,8 +72,8 @@ def _generate_sha512_hmac(pepper, salt, data):
         salt:   the 128bit (16bytes) obtained from sha256(rand:ip:agent)
         data:   the data to be protected
 
-from passlib.context import CryptContext
-self.password_crypt_context = CryptContext(schemes='bcrypt')
+    from passlib.context import CryptContext
+    self.password_crypt_context = CryptContext(schemes='bcrypt')
     """
     payload = '{}:{}'.format(salt.encode('utf-8'), data.encode('utf-8'))
     return base64.b64encode(hmac.new(pepper, payload, sha512).digest())
@@ -86,7 +87,6 @@ def generate_auth(pepper, password):
     Note: requires a request context.
     """
     salt = _create_salt()
-    print(password)
     password_hash = _generate_sha512_hmac(pepper, salt, password)
     return (salt, password_hash)
 
@@ -199,7 +199,6 @@ def get_db_friendly_date_time():
 
 def localize_datetime(value, zone_name='US/Eastern'):
     """ Localize the specified datetime value according to a zone"""
-    # print(tz.all_timezones)
     if value is None:
         return ''
     timezone = tz.timezone(zone_name)
@@ -278,7 +277,6 @@ def redcap_api_call(url, token, content, fields, max_time):
     elif content == 'event':
         res = api.export_events()
 
-    # print res.content
     data = []
     try:
         data = json.loads(str(res.content))
@@ -292,7 +290,6 @@ def retrieve_redcap_subjects(url, token, fields, max_time=30):
     """Read the list of subjects from the REDCap instance using the API"""
     data = redcap_api_call(url, token, content='record',
                            fields=fields, max_time=max_time)
-    # print("subjects: {}".format(data))
     return data
 
 
@@ -300,5 +297,4 @@ def retrieve_redcap_events(url, token, max_time=30):
     """Read the list of events from the REDCap instance using the API"""
     data = redcap_api_call(url, token, content='event',
                            fields={}, max_time=max_time)
-    # print("events: {}".format(data))
     return data

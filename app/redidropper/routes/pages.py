@@ -171,6 +171,9 @@ def render_login_local():
         password_hash = user.password_hash
 
         # @TODO: enforce the `local password` policy
+
+        # @NOTE local auth does not put the passhash in the database
+        # one is able to use a user email and any password to log in
         if '' == password_hash or \
                 utils.is_valid_auth(app.config['SECRET_KEY'],
                                     password_hash[0:16],
@@ -344,19 +347,24 @@ def token_auth(req):
     This token should be tied to the user in that if the user doesnt exist
     or is inactive due to expiry, this login scheme should not work
     """
-    email = request.authorization.get('username')
-    token = request.authorization.get('password')
-    print(email, token)
+    # print(dir(req))
+    if request.authorization:
+        email = request.authorization.get('username')
+        token = request.authorization.get('password')
+    else:
+        return None
+
     user, error_code = __check_user(email)
-    print(user)
     if error_code:
-        # if this were a middleware we would return 403 at this point
         return None
 
     valid_token = user.check_token(token)
-    print(valid_token)
 
     if valid_token:
+        # need to issue identity changed signal in order for
+        # principal to know whats going on. Means we can use permissions
+        identity_changed.send(current_app._get_current_object(),
+                                identity=Identity(user.get_id()))
         return user
     else:
         return None

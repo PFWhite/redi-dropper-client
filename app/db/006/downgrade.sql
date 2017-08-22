@@ -7,4 +7,5 @@ DELETE FROM LogType
 WHERE logtType='batch_generated' OR logtType='token_auth_authenticated';
 
 ALTER TABLE User
-  DROP COLUMN tokenHash;
+  DROP COLUMN tokenHash,
+  DROP COLUMN tokenSalt;

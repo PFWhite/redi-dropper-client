@@ -356,6 +356,7 @@ def __assign_roles(roles_required, user):
 
 @app.route('/api/gen_token', methods=['POST'])
 @login_required
+@perm_admin.require(http_exception=403)
 def generate_token():
     user_id = request.form.get('user_id')
     user = UserEntity.get_by_id(user_id)
@@ -363,10 +364,12 @@ def generate_token():
         token = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(32))
         creds = UserEntity.generate_credentials(user.email, token)
         user.token_hash = creds['password_hash']
+        user.token_salt = creds['salt']
         user.update()
         return utils.jsonify_success(token)
     else:
         return utils.jsonify_error('No user found', 404)
+
 
 @app.route('/api/save_user', methods=['POST'])
 @login_required
@@ -398,7 +401,11 @@ def api_save_user():
 
     app.logger.debug("saved user: {}".format(user))
     LogEntity.account_created(session['uuid'], user)
-    return utils.jsonify_success({'user': user.serialize()})
+    # NOTE the verification call here users the secret key instead of the salt.
+    return utils.jsonify_success({
+        'user': user.serialize(),
+        'verify_token': user.get_email_verification_token(app.config['SECRET_KEY'], app.config['SECRET_KEY'])
+    })
 
 @app.route('/api/edit_user', methods=['POST'])
 @login_required
