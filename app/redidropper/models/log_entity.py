@@ -25,6 +25,7 @@ from redidropper.models.log_type_entity import \
     LOG_TYPE_ACCOUNT_MODIFIED, \
     LOG_TYPE_REDCAP_SUBJECTS_IMPORTED, \
     LOG_TYPE_REDCAP_EVENTS_IMPORTED, \
+    LOG_TYPE_BATCH_GENERATED, \
     LOG_TYPE_ACCOUNT_UPDATED
 
 
@@ -138,6 +139,21 @@ class LogEntity(db.Model, CRUDMixin):
     def redcap_subjects_imported(session_id, details=''):
         """ Log it """
         LogEntity._log(LOG_TYPE_REDCAP_SUBJECTS_IMPORTED, session_id, details)
+
+    @staticmethod
+    def batch_generated(session_id, details=''):
+        """ Log it """
+        LogEntity._log(LOG_TYPE_BATCH_GENERATED, session_id, details)
+
+    @staticmethod
+    def token_auth_attempted(session_id, details=''):
+        """ Log it """
+        LogEntity._log(LOG_TYPE_TOKEN_AUTH_ATTEMPTED, session_id, details)
+
+    @staticmethod
+    def token_generated(session_id, details=''):
+        """ Log it """
+        LogEntity._log(LOG_TYPE_TOKEN_GENERATED, session_id, details)
 
     @staticmethod
     def redcap_events_imported(session_id, details=''):

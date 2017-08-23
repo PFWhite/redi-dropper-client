@@ -8,17 +8,17 @@ Goal: Store helper functions not tied to a specific module
 """
 
 import os
-import ast
 import json
 from datetime import datetime, timedelta
-from itsdangerous import URLSafeTimedSerializer
-from flask import flash, request, jsonify
 from hashlib import sha512, sha256
 import hmac
 import base64
-from subprocess import Popen
-from subprocess import PIPE
+
 import pytz as tz
+from itsdangerous import URLSafeTimedSerializer
+from flask import flash, request, jsonify
+
+from cappy import API
 
 FORMAT_US_DATE = "%x"
 FORMAT_US_DATE_TIME = '%x %X'
@@ -63,16 +63,14 @@ def _create_salt():
 
 
 def _generate_sha512_hmac(pepper, salt, data):
-    """ Generate the SHA512 HMAC -- for compatibility with Flask-Security
+    """
+    Generate the SHA512 HMAC -- for compatibility with Flask-Security
     h = HMAC(pepper, salt+data)
 
     Where
         pepper: the global application key
         salt:   the 128bit (16bytes) obtained from sha256(rand:ip:agent)
         data:   the data to be protected
-
-from passlib.context import CryptContext
-self.password_crypt_context = CryptContext(schemes='bcrypt')
     """
     payload = '{}:{}'.format(salt.encode('utf-8'), data.encode('utf-8'))
     return base64.b64encode(hmac.new(pepper, payload, sha512).digest())
@@ -175,9 +173,12 @@ def pack_error(msg):
     return pack({'status': 'error', 'message': msg})
 
 
-def jsonify_error(data):
+def jsonify_error(data, status_code=None):
     """ Format an error message to be json-friendly """
-    return jsonify({'status': 'error', 'data': data})
+    res = jsonify({'status': 'error', 'data': data})
+    if status_code:
+        res.status_code = status_code
+    return res
 
 
 def jsonify_success(data):
@@ -195,7 +196,6 @@ def get_db_friendly_date_time():
 
 def localize_datetime(value, zone_name='US/Eastern'):
     """ Localize the specified datetime value according to a zone"""
-    # print(tz.all_timezones)
     if value is None:
         return ''
     timezone = tz.timezone(zone_name)
@@ -262,36 +262,23 @@ def redcap_api_call(url, token, content, fields, max_time):
     Send an API request to the REDCap server.
     Notes:
         - when no fields are specified all fields are retrived
-        - the underlining cURL process is limited to complete
-            within `max_time` seconds
 
     :rtype: dict
     :return: the requested content if it is of valid type (event, record)
     """
     assert content in ['event', 'record']
+    api = API(token, url, 'master.yaml')
 
-    # @TODO: add config flag for enabling/disabling the ssl
-    # certificate validation: curl -k
-    cmd = 'curl -m {} -ksX POST {} ' \
-        ' -d token={} ' \
-        ' -d format=json ' \
-        ' -d content={} ' \
-        ' -d fields="{}"' \
-        ' -d returnFormat=json ' \
-        ' | python -m json.tool ' \
-        .format(max_time, url, token, content, fields)
-
-    proc = Popen(cmd, shell=True, stdout=PIPE)
-    (out, err) = proc.communicate()
-    # print("redcap_api_call: {}\n{}".format(cmd, out))
-
-    if err:
-        print("redcap_api_call error: \n{}".format(err))
+    if content == 'record':
+        res = api.export_records(fields=fields)
+    elif content == 'event':
+        res = api.export_events()
 
     data = []
     try:
-        data = ast.literal_eval(out)
+        data = json.loads(str(res.content))
     except Exception as exc:
+        # raise exc
         print("redcap_api_call error parsing curl response:\n{}".format(exc))
     return data
 
@@ -300,7 +287,6 @@ def retrieve_redcap_subjects(url, token, fields, max_time=30):
     """Read the list of subjects from the REDCap instance using the API"""
     data = redcap_api_call(url, token, content='record',
                            fields=fields, max_time=max_time)
-    # print("subjects: {}".format(data))
     return data
 
 
@@ -308,5 +294,4 @@ def retrieve_redcap_events(url, token, max_time=30):
     """Read the list of events from the REDCap instance using the API"""
     data = redcap_api_call(url, token, content='event',
                            fields={}, max_time=max_time)
-    # print("events: {}".format(data))
     return data

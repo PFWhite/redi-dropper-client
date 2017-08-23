@@ -1,0 +1,13 @@
+{% extends "layout.html" %}
+
+{% block content %}
+
+        <h1>Batch Download</h1>
+
+        <!-- used by react -->
+        <div id="batch_download"> </div>
+
+    <link href="{{ url_for('static', filename='css/batch_download.css') }}" rel="stylesheet">
+    <script type="text/jsx" src="{{ url_for('static', filename='js/batch_download.jsx') }}"></script>
+
+{% endblock %}

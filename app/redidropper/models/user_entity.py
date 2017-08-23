@@ -8,7 +8,7 @@ from flask_login import UserMixin
 # flask_security expands the flask_login UserMixin class with:
 #   is_active(), get_auth_token, has_role()
 # from flask_security import UserMixin
-from redidropper.main import db
+from redidropper.main import app, db
 from redidropper.database.crud_mixin import CRUDMixin
 from redidropper.models.role_entity import RoleEntity
 from redidropper.models.user_role_entity import UserRoleEntity
@@ -42,6 +42,10 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
                                   server_default='0000-00-00 00:00:00')
     password_hash = db.Column("usrPasswordHash", db.String(255),
                               nullable=False, server_default='')
+    token_hash = db.Column("tokenHash", db.String(255),
+                           nullable=True, server_default='')
+    token_salt = db.Column("tokenSalt", db.String(255),
+                           nullable=True, server_default='')
 
     # @OneToMany
     roles = db.relationship(RoleEntity,
@@ -60,6 +64,8 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
         further refine before loading them items. This is usually what you want
         if you expect more than a handful of items for this relationship.
     """
+
+
 
     def is_active(self):
         """ An user can be blocked by setting a flag in the database """
@@ -123,6 +129,47 @@ class UserEntity(db.Model, UserMixin, CRUDMixin):
             'access_expires_at':
                 utils.localize_est_datetime(self.access_expires_at)
         }
+
+    @classmethod
+    def is_existing(self, email):
+        """
+        :rtype boolean
+        :return True if a user exists in the database with the given email
+        """
+        try:
+            existing_user = UserEntity.query.filter_by(email=email).one()
+            return True
+        except:
+            return False
+
+    @classmethod
+    def generate_credentials(self, email, password=None):
+        # TODO: Add support for reading a password field
+        # the following is a hack to support the old way
+        # of not generating a hash from the password which
+        # is being used here so that token auth can work
+        password = password or email
+        salt, password_hash = utils.generate_auth(app.config['SECRET_KEY'],
+                                                  password)
+        return {
+            "email": email,
+            "salt": salt,
+            "password_hash": password_hash,
+        }
+
+    def check_token(self, token):
+        """
+        Looks to see if the hashed token exists in the tokenHash column
+        utilizes the same helper function the credential generation function
+        uses.
+        """
+        if self.token_hash == '':
+            return false
+        else:
+            return utils.is_valid_auth(app.config['SECRET_KEY'],
+                                       self.token_salt,
+                                       token,
+                                       self.token_hash)
 
     def __repr__(self):
         return "<UserEntity (usrID: {0.id}, usrEmail: {0.email}, " \

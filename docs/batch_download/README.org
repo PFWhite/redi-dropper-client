@@ -1,0 +1,60 @@
+* Scenario
+Riley the researcher needs to download images in batches in order to
+do processing and analysis on them. Riley wants to be able to select batches
+based on varying criteria like time taken, event they are tied to etc.
+* Implementation
+** Front end
+Need new page and various components for selecting the various tunable things.
+** Back end
+*** DONE New route
+    CLOSED: [2017-08-14 Mon 14:01]
+    Two new routes were implemented: /batch_download and /api/batch_download.
+    The first is in users.py where all pages that load web gui goes and the 
+    second is in the api.py file
+**** /batch_download
+     This just displays the webpage. Every role should have access to this.
+**** /api/batch_download
+     GET:
+     expects a json object encoded as url params that looks like the following
+     #+BEGIN_SRC json
+     {
+         "subjects":["ALL"],
+         "events":["ALL"],
+         "startDate":"2017-08-15",
+         "takenEndDate":"2017-08-23",
+         "endDate":"2017-08-17",
+         "takenStartDate":"2017-08-23"
+     }
+     #+END_SRC
+     A list of redcap subject_ids and 'redcap_event's which filter down the files 
+     to the ones that are associated with the selected subjects and events.
+
+     startDate and endDate denote clamps for the date uploaded.
+     takenStartDate and takenEndDate denote clamps for the date the image was taken
+    
+*** DONE Metadata.json that contains the image info
+    CLOSED: [2017-08-14 Mon 14:01]
+    This will contain metadata about the images from polyjuice. Additionally, we will
+    include the url that was used to download the images so it can be reused in the future.
+
+    This metadata will stored in the database in a column called 'dicomTagsMetaData'
+*** DONE Zip multiple files
+    CLOSED: [2017-08-14 Mon 14:01]
+    All files that are valid according to the url params in /api/batch_download will
+    be zipped up and returned.
+
+    if there are no files returned, a 404 error is returned
+*** DONE Log the activity
+    CLOSED: [2017-08-14 Mon 14:36]
+    We need to log what we are doing to the database
+*** DONE Upload zip
+    CLOSED: [2017-08-14 Mon 14:01]
+    Call flask sendfile with the zipped directory that we have generated.
+*** DONE clean up the tmp directory every now and then
+    CLOSED: [2017-08-14 Mon 14:07]
+    This is done by modifying the TMPTIME variable to something other than
+    -1. This is the number of days until things in the tmp folder should be deleted
+
+    Every file over 2 days old will be deleted, see routes/api/clean_old_files
+** Front end
+   Development done in batch_download.jsx. Numerous front end components made.

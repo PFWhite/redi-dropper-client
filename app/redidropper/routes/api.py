@@ -9,7 +9,11 @@ Goal: Delegate requests to the `/api` path to the appropriate controller
   Taeber Rapczak          <taeber@ufl.edu>
 """
 
-# import math
+import os
+import json
+import zipfile
+import random
+import string
 from datetime import datetime
 import collections
 
@@ -183,7 +187,7 @@ def api_delete_file():
         response = utils.jsonify_error({"exception": ret_value})
 
     return response
-    
+
 @app.route('/api/update_fileType', methods=['POST'])
 @login_required
 def api_update_fileType():
@@ -217,11 +221,106 @@ def download_file():
     LogEntity.file_downloaded(session['uuid'], file_path)
     return send_file(file_path, as_attachment=True)
 
+def get_all_files():
+    """
+    Returns all SubjectFiles with the redcap_event and subject redcap id attached
+    """
+    return db.session.query(SubjectFileEntity,
+                            EventEntity.redcap_event,
+                            SubjectEntity.redcap_id).join(EventEntity).join(SubjectEntity)
+
+def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
+                         endDate=None, takenStartDate=None, takenEndDate=None):
+    """
+    This is used with batch downloading to filter out the files that
+    dont match what is passed
+    """
+    all_files = get_all_files()
+    if not 'ALL' in subjects:
+        all_files = all_files.filter(SubjectEntity.redcap_id.in_(subjects))
+    if not 'ALL' in events:
+        all_files = all_files.filter(EventEntity.redcap_event.in_(events))
+    if startDate:
+        all_files = all_files.filter(SubjectFileEntity.uploaded_at >= startDate)
+    if endDate:
+        all_files = all_files.filter(SubjectFileEntity.uploaded_at <= startDate)
+    if takenStartDate:
+        all_files = all_files.filter(SubjectFileEntity.imagingDate >= startDate)
+    if takenEndDate:
+        all_files = all_files.filter(SubjectFileEntity.imagingDate <= startDate)
+    return all_files
+
+def clean_old_files(root, test_string='download'):
+    # two days, 24 hours, 60 min, 60 sec
+    too_old = 2 * 24 * 60 * 60
+    for root, dirs, files in os.walk(root):
+        for path in files:
+            if test_string in path:
+                if os.stat(os.path.join(root, path)).st_mtime > too_old:
+                    os.remove(os.path.join(root, path))
+                    LogEntity.file_deleted(session['uuid'], os.path.join(root, path))
+
+
+@app.route('/api/batch_download', methods=['GET', 'HEAD'])
+@login_required
+def api_batch_download():
+    """
+    Uses the url args to find matching files. Then downloads a
+    zipfile containing those files.
+    Also will generate a metadata file for the end user that has
+    information about the file
+
+    The GET route will download the file where as the HEAD will return
+    just the metadata of the files that would be downloaded with GET
+
+    NOTE: Calling this route deletes old stuff from the tmp
+    directory
+    TODO: configurable tmp directory
+    """
+    clean_old_files('/tmp')
+
+    query = request.args.get('q')
+    params = json.loads(query)
+
+    try:
+        all_files, events, subjects = zip(*__get_matching_batch(**params))
+    except ValueError as ex:
+        return utils.jsonify_error(params, 404)
+
+    # metadata file generation
+    now = str(datetime.now()).replace(' ', '_')
+    paths = [subfile.get_full_path(app.config['REDIDROPPER_UPLOAD_SAVED_DIR']) for subfile in all_files]
+    meta_path = '/tmp/download_metadata-' + now + '.json'
+    paths.append(meta_path)
+    metadata = {
+        'url_parameters': params,
+        'files': [f.serialize() for f in all_files]
+    }
+    if request.method == 'HEAD':
+        return utils.jsonify_success(metadata)
+
+    with open(meta_path, 'w') as mfile:
+        json.dump(metadata, mfile, indent=4, sort_keys=True)
+
+    # zip files into tmp
+    zip_path = '/tmp/batch_download-' + str(now) + '.zip'
+    with zipfile.ZipFile(zip_path, 'w') as myzip:
+        for path in paths:
+            myzip.write(path, os.path.basename(path))
+
+    # log steps
+    LogEntity.batch_generated(session['uuid'], zip_path)
+
+    # send zip
+    filename = os.path.split(zip_path)[1]
+    res = send_file(zip_path, as_attachment=True)
+    return res
+
 @app.route("/api/all_files_info", methods=['GET'])
 @login_required
 def all_files_info():
     """ Get the list of all uploaded files and their path """
-    all_files = db.session.query(SubjectFileEntity,EventEntity.redcap_event,SubjectEntity.redcap_id).join(EventEntity).join(SubjectEntity)
+    all_files = get_all_files()
     return_list = [__build_files_info_json(subject_file,event,subject) for subject_file,event,subject in all_files]
     return utils.jsonify_success({'list_of_files' : return_list})
 
@@ -250,19 +349,6 @@ def __get_date_information():
         "access_expires_at": utils.get_expiration_date(180),
     }
 
-def __generate_credentials(email):
-    # @TODO: use a non-gatorlink password here
-    password = email
-    salt, password_hash = utils.generate_auth(app.config['SECRET_KEY'],
-                                              password)
-    # Note: we store the salt as a prefix
-    return {
-        "email": email,
-        "salt": salt,
-        "password_hash": password_hash,
-    }
-
-
 def __assign_roles(roles_required, user):
     """
     Delete all roles for the user if not in the
@@ -273,17 +359,23 @@ def __assign_roles(roles_required, user):
     user = UserEntity.update(user, roles=user_roles)
     return user
 
-
-def __check_is_existing_user(email):
-    """
-    :rtype boolean
-    :return True if a user exists in the database with the given email
-    """
-    try:
-        existing_user = UserEntity.query.filter_by(email=email).one()
-        return True
-    except:
-        return False
+@app.route('/api/gen_token', methods=['POST'])
+@login_required
+@perm_admin.require(http_exception=403)
+def generate_token():
+    user_id = request.form.get('user_id')
+    user = UserEntity.get_by_id(user_id)
+    if user:
+        token = ''.join(random.SystemRandom().choice(string.ascii_uppercase + string.digits) for _ in range(32))
+        creds = UserEntity.generate_credentials(user.email, token)
+        user.token_hash = creds['password_hash']
+        user.token_salt = creds['salt']
+        user.update()
+        LogEntity.token_generated(session['uuid'],
+                                  '{} created a token for {}'.format(current_user, user.email))
+        return utils.jsonify_success(token)
+    else:
+        return utils.jsonify_error('No user found', 404)
 
 
 @app.route('/api/save_user', methods=['POST'])
@@ -294,10 +386,10 @@ def api_save_user():
     TODO: Add support for reading a password field
     """
     request_data = __extract_user_information(request)
-    credentials = __generate_credentials(request_data["email"])
+    credentials = UserEntity.generate_credentials(request_data["email"])
     date_data = __get_date_information()
 
-    if __check_is_existing_user(request_data["email"]):
+    if UserEntity.is_existing(request_data["email"]):
         return utils.jsonify_error(
             {'message': 'Sorry. This email is already taken.'})
 
@@ -316,7 +408,11 @@ def api_save_user():
 
     app.logger.debug("saved user: {}".format(user))
     LogEntity.account_created(session['uuid'], user)
-    return utils.jsonify_success({'user': user.serialize()})
+    # NOTE the verification call here users the secret key instead of the salt.
+    return utils.jsonify_success({
+        'user': user.serialize(),
+        'verify_token': user.get_email_verification_token(app.config['SECRET_KEY'], app.config['SECRET_KEY'])
+    })
 
 @app.route('/api/edit_user', methods=['POST'])
 @login_required
@@ -326,7 +422,7 @@ def api_edit_user():
     TODO: Add support for reading a password field
     """
     request_data = __extract_user_information(request)
-    credentials = __generate_credentials(request_data["email"])
+    credentials = UserEntity.generate_credentials(request_data["email"])
     date_data = __get_date_information()
 
     user = UserEntity.get_by_id(id=request_data["usr_id"])

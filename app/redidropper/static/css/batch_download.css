@@ -1,0 +1,21 @@
+#batch-page {
+    position: relative;
+    overflow-y: scroll;
+    margin-bottom: 40px;
+}
+
+#batch-page .inactive {
+    display: none;
+}
+
+#batch-page .batch-form-group {
+    text-align: left;
+}
+
+.batch-input {
+    margin-bottom: 1rem;
+}
+
+.batch-finalize {
+    margin: 1rem;
+}

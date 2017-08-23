@@ -34,6 +34,7 @@ from flask_principal import \
 from redidropper.main import app
 from redidropper import utils
 from redidropper.models.user_entity import UserEntity
+from redidropper.models.log_entity import LogEntity
 
 # set the login manager for the app
 login_manager = LoginManager(app)
@@ -171,6 +172,9 @@ def render_login_local():
         password_hash = user.password_hash
 
         # @TODO: enforce the `local password` policy
+
+        # @NOTE local auth does not put the passhash in the database
+        # one is able to use a user email and any password to log in
         if '' == password_hash or \
                 utils.is_valid_auth(app.config['SECRET_KEY'],
                                     password_hash[0:16],
@@ -210,6 +214,53 @@ def shibb_redirect():
                 .format(url_for('shibb_return'))
     return redirect(next_page)
 
+NO_USER = 'no user found'
+INACTIVE_USER = 'inactive user supplied'
+EXPIRED_USER = 'expired user supplies'
+
+def __check_user(email):
+    """
+    Checks the email and validates the the user is:
+    present, active, and not expired.
+
+    Returns a tuple of user, error code
+    """
+    user = UserEntity.query.filter_by(email=email).first()
+
+    if not user:
+        return None, NO_USER
+    elif not user.is_active():
+        return user, INACTIVE_USER
+    elif user.is_expired():
+        return user, EXPIRED_USER
+    else:
+        return user, None
+
+def __web_auth_error_handler(code):
+    """
+    Handles the various error codes provided by __check_user.
+    This function should only be used with the web gui
+    """
+    if code == NO_USER:
+        utils.flash_error("No such user: {}".format(email))
+        LogEntity.login_error(uuid,
+                              "Shibboleth user {} is not registered for this "
+                              "app".format(email))
+
+        return redirect(url_for('index'))
+    elif code == INACTIVE_USER:
+        utils.flash_error("Inactive user: {}".format(email))
+        LogEntity.login_error(uuid, "Inactive user {} tried to login"
+                              .format(email))
+        return redirect(url_for('index'))
+    elif code == EXPIRED_USER:
+        utils.flash_error("User account for {} expired on {}"
+                          .format(email, user.access_expires_at))
+        LogEntity.login_error(uuid, "Expired user {} tried to login"
+                              .format(email))
+        return redirect(url_for('index'))
+    else:
+        return None
 
 @app.route('/loginExternalAuthReturn', methods=['POST', 'GET'])
 def shibb_return():
@@ -232,28 +283,10 @@ def shibb_return():
     glid = request.headers['Glid']  # Gatorlink ID
     app.logger.debug("Checking if email: {} is registered for glid: {}"
                      .format(email, glid))
-    user = UserEntity.query.filter_by(email=email).first()
 
-    if not user:
-        utils.flash_error("No such user: {}".format(email))
-        LogEntity.login_error(uuid,
-                              "Shibboleth user {} is not registered for this "
-                              "app".format(email))
-
-        return redirect(url_for('index'))
-
-    if not user.is_active():
-        utils.flash_error("Inactive user: {}".format(email))
-        LogEntity.login_error(uuid, "Inactive user {} tried to login"
-                              .format(email))
-        return redirect(url_for('index'))
-
-    if user.is_expired():
-        utils.flash_error("User account for {} expired on {}"
-                          .format(email, user.access_expires_at))
-        LogEntity.login_error(uuid, "Expired user {} tried to login"
-                              .format(email))
-        return redirect(url_for('index'))
+    user, error_code = __check_user(email)
+    if error_code:
+        return __web_auth_error_handler(error_code)
 
     # Log it
     app.logger.info('Successful login via Shibboleth for: {}'.format(user))
@@ -306,37 +339,37 @@ def on_identity_loaded(sender, identity):
 
 
 @login_manager.request_loader
-def load_user_from_request(req):
-    """ To support login from both a url argument and from Basic Auth
-     using the Authorization header
-
-    @TODO: use for api requests?
-        Need to add column `UserAuth.uathApiKey`
+def token_auth(req):
     """
+    Uses a basic auth type scheme for api usage. Instead of a password
+    a token is used which is found in the apiToken column of the user
+    table.
 
-    # first, try to login using the api_key url arg
-    api_key = req.args.get('api_key')
+    This token should be tied to the user in that if the user doesnt exist
+    or is inactive due to expiry, this login scheme should not work
+    """
+    LogEntity.token_auth_attempted(session['uuid'],
+                                   'Authorization passed: {}'.format(str(request.authorization or {})))
+    if request.authorization:
+        email = request.authorization.get('username')
+        token = request.authorization.get('password')
+    else:
+        return None
 
-    if not api_key:
-        # next, try to login using Basic Auth
-        api_key = req.headers.get('Authorization')
-        if api_key:
-            api_key = api_key.replace('Basic ', '', 1)
-            try:
-                api_key = base64.b64decode(api_key)
-            except TypeError:
-                pass
+    user, error_code = __check_user(email)
+    if error_code:
+        return None
 
-    if api_key:
-        md5 = hashlib.md5()
-        md5.update(api_key)
-        app.logger.debug("trying api_key: {}".format(md5.digest()))
-        user = UserEntity.query.filter_by(api_key=api_key).first()
+    valid_token = user.check_token(token)
+
+    if valid_token:
+        # need to issue identity changed signal in order for
+        # principal to know whats going on. Means we can use permissions
+        identity_changed.send(current_app._get_current_object(),
+                                identity=Identity(user.get_id()))
         return user
-
-    # finally, return None if neither of the api_keys is valid
-    return None
-
+    else:
+        return None
 
 @app.route('/logout')
 def logout():
