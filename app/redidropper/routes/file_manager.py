@@ -48,7 +48,8 @@ class FileChunk(object):
         self.afile = request.files['file']
         self.total_parts = int(request.form['resumableTotalChunks'])
         self.redcap_id = request.form['subject_id']  # @TODO: rename
-        self.event_id = int(request.form['event_id'])
+        # Storing nothing for event_id as it is no longer part of file uploading process
+        self.event_id = None
         return self
 
     def __repr__(self):

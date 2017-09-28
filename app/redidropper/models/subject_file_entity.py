@@ -16,7 +16,7 @@ class SubjectFileEntity(db.Model, CRUDMixin):
     subject_id = db.Column("sbjID", db.Integer, db.ForeignKey('Subject.sbjID'),
                            nullable=False)
     event_id = db.Column("evtID", db.Integer, db.ForeignKey('Event.evtID'),
-                         nullable=False)
+                         nullable=True)
     file_name = db.Column("sfFileName", db.String(255), nullable=False)
     file_check_sum = db.Column("sfFileCheckSum", db.String(32), nullable=False)
     file_size = db.Column("sfFileSize", db.String(255), nullable=False)
@@ -110,8 +110,7 @@ class SubjectFileEntity(db.Model, CRUDMixin):
             'subject_id': self.subject_id,
             'redcap_id': self.subject.redcap_id,
             'event_id': self.event_id,
-            'event_name': self.event.redcap_event,
+            'event_name': None if self.event_id==None else self.event.redcap_event,
             'user_id': self.user_id,
             'user_name': self.user.get_name()
         }
-
