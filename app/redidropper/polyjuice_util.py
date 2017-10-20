@@ -1,3 +1,5 @@
+import json
+
 from polyjuice.dicom_image import DicomImage
 
 def get_changes_for_deidentification():
@@ -24,6 +26,7 @@ def get_changes_for_deidentification():
         'PatientAge': '',
         'PatientWeight': '',
         'EthnicGroup': '',
+        'PatientAddress': '',
         'ProtocolName': '',
         'StudyInstanceUID': '',
         'SeriesInstanceUID': '',
@@ -37,21 +40,33 @@ def is_delete_value(value):
     return value == None
 
 def _deidentify(image):
-    changes = get_changes_for_deidentificaton()
+    changes = get_changes_for_deidentification()
     for key, value in changes.items():
-        delete = is_delete_value(key, value)
+        delete = is_delete_value(value)
         image.modify_item(key, value, delete)
     return image
 
-def clean_image(subject_file, file_prefix):
+def get_file_type(metadata_string):
+    """
+    Modality is the name of the dicom header that specifies the type
+    MR is magnetic resonance
+    CT is computed tomography
+    a full list can be found at https://www.dicomlibrary.com/dicom/modality/
+    """
+    data = json.loads(metadata_string)
+    return data['Modality']
+
+def clean_image(subject_file, directory):
     """
     This function edits the file and updates the database entry
     """
-    image_path = subject_file.get_full_path(file_prefx)
-    image = DicomImage(image_path)
+    image_path = subject_file.get_full_path(directory)
+    image_file = open(image_path)
+    image = DicomImage(image_file)
+    image_file.close()
     image = _deidentify(image)
-    # event = get_event_name(image)
     metadata = image.serialize_metadata()
     subject_file.file_metadata = metadata
+    subject_file.file_type = get_file_type(metadata)
     image.save_image(image_path)
     subject_file.save()

@@ -21,6 +21,7 @@ from redidropper.models.log_entity import LogEntity
 from werkzeug import secure_filename
 
 from redidropper import utils
+from redidropper import polyjuice_util
 from redidropper.main import app, db
 from redidropper.models.subject_entity import SubjectEntity
 from redidropper.models.subject_file_entity import SubjectFileEntity
@@ -76,6 +77,7 @@ def save_file_metadata(fchunk):
         file_check_sum='pending',
         file_size=fchunk.total_size,
         file_type=fchunk.file_type,
+        event_id=fchunk.event_id,
         uploaded_at=added_date,
         user_id=current_user.id)
     logger.debug("Saved metadata to the db: ".format(subject_file))
@@ -119,16 +121,16 @@ def save_uploaded_file():
 
     if subject_file is not None:
         prefix = app.config['REDIDROPPER_UPLOAD_SAVED_DIR']
-        print(prefix)
         file_path = subject_file.get_full_path(prefix)
         delete_temp_files(fchunk)
         hash_matches = verify_file_integrity(fchunk)
 
         if hash_matches:
-            try:
-                utils.clean_image(subject_file, prefix)
-            except Exception as ex:
-                print('Not a dicom file {}'.format(subject_file))
+            # try:
+            polyjuice_util.clean_image(subject_file, prefix)
+            # except Exception as ex:
+            #     print('Not a dicom file {}'.format(subject_file))
+            #     raise ex
 
             LogEntity.file_uploaded(session['uuid'],
                                     file_path)
