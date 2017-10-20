@@ -34,3 +34,4 @@ pylint.out
 
 app/ssl/server.crt
 app/ssl/server.key
+node_modules

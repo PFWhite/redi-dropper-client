@@ -25,6 +25,7 @@ from redidropper.main import app, db
 from redidropper.models.subject_entity import SubjectEntity
 from redidropper.models.subject_file_entity import SubjectFileEntity
 
+
 logger = app.logger
 
 
@@ -37,6 +38,7 @@ class FileChunk(object):
         Copy the request data about the file chunk into an object we can
         pass around functions that need the data
         """
+
         self = FileChunk()
         # @TODO: !!! add size checks for user input
         self.number = int(request.form['resumableChunkNumber'])
@@ -71,7 +73,6 @@ def save_file_metadata(fchunk):
 
     subject_file = SubjectFileEntity.create(
         subject_id=subject.id,
-        event_id=fchunk.event_id,
         file_name=fchunk.file_name,
         file_check_sum='pending',
         file_size=fchunk.total_size,
@@ -115,14 +116,21 @@ def save_uploaded_file():
 
     # When all chunks are received we merge them
     subject_file = merge_files(fchunk)
+    # utils.clean_image(subject_file.subject.redcap_id)
 
     if subject_file is not None:
         prefix = app.config['REDIDROPPER_UPLOAD_SAVED_DIR']
+        print(prefix)
         file_path = subject_file.get_full_path(prefix)
         delete_temp_files(fchunk)
         hash_matches = verify_file_integrity(fchunk)
 
         if hash_matches:
+            try:
+                utils.clean_image(subject_file, prefix)
+            except Exception as ex:
+                print('Not a dicom file {}'.format(subject_file))
+
             LogEntity.file_uploaded(session['uuid'],
                                     file_path)
             return utils.jsonify_success('File {} uploaded successfully.'
@@ -186,6 +194,7 @@ def merge_files(fchunk):
     :return the object representing the file metadata
     """
     subject_file = save_file_metadata(fchunk)
+    # instead lets put the files in the polyjuice staging area
     prefix = app.config['REDIDROPPER_UPLOAD_SAVED_DIR']
     file_path = subject_file.get_full_path(prefix)
     file_name = fchunk.file_name
@@ -200,7 +209,6 @@ def merge_files(fchunk):
             chunk_path = get_chunk_path(file_name, i)
             tempfile = open(chunk_path, "r")
             f.write(tempfile.read())
-        # log_manager.log_file_upload(subject_file)
     except Exception as exc:
         subject_file = None
         logger.error("There was an issue in merge_files(): {}".format(exc))

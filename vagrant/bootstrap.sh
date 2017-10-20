@@ -15,3 +15,4 @@ configure_base
 install_utils
 install_apache_for_python
 install_dropper
+install_polyjuice
