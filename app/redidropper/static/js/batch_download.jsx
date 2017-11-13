@@ -10,12 +10,14 @@
 window.staticData = {
     dateHeading: 'Image Upload Date',
     dateHelpText: 'Images uploaded before the start date or after the end date will not be selected.',
-    takenDateHeading: 'Image Taken Date',
-    takenDateHelpText: 'Images taken before the start date or after the end date will not be selected.',
+    /* takenDateHeading: 'Image Taken Date',
+     * takenDateHelpText: 'Images taken before the start date or after the end date will not be selected.',*/
     subjectHeading: 'Subject ID',
     subjectHelpText: 'Select multiple by using the shift or the control or command key. ALL selects all subjects.',
     eventHeading: 'Redcap Events',
     eventHelpText: 'Select multiple by using the shift or the control or command key. ALL selects all events.',
+    imageTypeHeading: 'Image Format',
+    imageTypeHelpText: 'Select multiple by using the shift or the control or command key. ALL selects all image formats. N/A indicates that an image format was not specified.',
 };
 
 var BatchInput = React.createClass({
@@ -110,6 +112,7 @@ var BatchForm = React.createClass({
         return {
             subjects: ['ALL'],
             events: ['ALL'],
+            imageTypes: ['ALL', 'N/A', 'MRI', 'PET'],
         }
     },
     checkSelected: function(key, value) {
@@ -154,6 +157,15 @@ var BatchForm = React.createClass({
                 selected: self.checkSelected(eventKey, item)
             };
         });
+        var imageTypeKey = 'imageTypes';
+        var imageTypeChange = self.updateSelect.bind(self, imageTypeKey);
+        var imageTypeOptions = self.state.imageTypes.map(function (item) {
+            return {
+                value: item,
+                display: item,
+                selected: self.checkSelected(imageTypeKey, item)
+            };
+        });
         var dateOptions = [
             {
                 key: 'startDate',
@@ -171,23 +183,23 @@ var BatchForm = React.createClass({
             },
         ];
 
-        var takenDateOptions = [
-            {
-                key: 'takenStartDate',
-                value: self.props.formData.takenStartDate,
-                type: 'date',
-                update: self.updateField.bind(self, 'takenStartDate'),
-                display: 'Start Date'
-            },
-            {
-                key: 'takenEndDate',
-                value: self.props.formData.takenEndDate,
-                type: 'date',
-                update: self.updateField.bind(self, 'takenEndDate'),
-                display: 'End Date'
-            },
-        ];
-
+        /* var takenDateOptions = [
+         *     {
+         *         key: 'takenStartDate',
+         *         value: self.props.formData.takenStartDate,
+         *         type: 'date',
+         *         update: self.updateField.bind(self, 'takenStartDate'),
+         *         display: 'Start Date'
+         *     },
+         *     {
+         *         key: 'takenEndDate',
+         *         value: self.props.formData.takenEndDate,
+         *         type: 'date',
+         *         update: self.updateField.bind(self, 'takenEndDate'),
+         *         display: 'End Date'
+         *     },
+         * ];
+         */
         return(
             <div id="batch-form" className='row'>
                 <div className="col-sm-offset-2 col-sm-8">
@@ -203,13 +215,18 @@ var BatchForm = React.createClass({
                                         change={eventChange}
                                         helpText={window.staticData.eventHelpText}/>
 
+                        <BatchFormGroup heading={window.staticData.imageTypeHeading}
+                                        selectOptions={imageTypeOptions}
+                                        change={imageTypeChange}
+                                        helpText={window.staticData.imageTypeHelpText}/>
+
                         <BatchFormGroup heading={window.staticData.dateHeading}
                                         options={dateOptions}
                                         helpText={window.staticData.dateHelpText}/>
 
-                        <BatchFormGroup heading={window.staticData.takenDateHeading}
-                                        options={takenDateOptions}
-                                        helpText={window.staticData.takenDateHelpText}/>
+                        {/* <BatchFormGroup heading={window.staticData.takenDateHeading}
+                        options={takenDateOptions}
+                        helpText={window.staticData.takenDateHelpText}/> */}
                         <button
                             className='btn'
                             onClick={this.props.toggle.bind(this)}>Finalize</button>
@@ -253,11 +270,15 @@ var BatchSummary = React.createClass({
                         {' ' + this.props.formData.events.join(', ') + '.'}
                 </p>
                 <p className="summary-group">
-                    The files downloaded will have been uploaded from {uploadStart} to {uploadEnd}.
+                    The following image formats will be included in your batch:
+                        {' ' + this.props.formData.imageTypes.join(', ') + '.'}
                 </p>
                 <p className="summary-group">
-                    The files downloaded will have been created from {takenStart} to {takenEnd}.
+                    The files downloaded will have been uploaded from {uploadStart} to {uploadEnd}.
                 </p>
+                {/* <p className="summary-group">
+                The files downloaded will have been created from {takenStart} to {takenEnd}.
+                </p> */}
                 <button
                     className='btn batch-finalize'
                     onClick={this.props.toggle.bind(this)}>Edit Batch</button>
@@ -273,7 +294,7 @@ var BatchSummary = React.createClass({
 var Page = React.createClass({
     getInitialState: function() {
         var formData = window.location.hash.slice(1,window.location.hash.length);
-        formData = formData || '{"subjects":["ALL"],"events":["ALL"]}';
+        formData = formData || '{"subjects":["ALL"],"events":["ALL"],"imageTypes":["ALL"]}';
         return {
             activePanel: 0,
             formData: JSON.parse(formData),

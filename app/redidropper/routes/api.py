@@ -21,7 +21,7 @@ from flask import request
 from flask import send_file
 from flask import session
 from flask import make_response
-from flask_login import login_required
+from flask_login import login_required, current_user
 
 from redidropper.main import app, db
 from redidropper import emails
@@ -230,7 +230,8 @@ def get_all_files():
                             SubjectEntity.redcap_id).join(EventEntity).join(SubjectEntity)
 
 def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
-                         endDate=None, takenStartDate=None, takenEndDate=None):
+                         endDate=None, takenStartDate=None, takenEndDate=None,
+                         imageTypes=[ 'ALL' ]):
     """
     This is used with batch downloading to filter out the files that
     dont match what is passed
@@ -244,10 +245,12 @@ def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
         all_files = all_files.filter(SubjectFileEntity.uploaded_at >= startDate)
     if endDate:
         all_files = all_files.filter(SubjectFileEntity.uploaded_at <= startDate)
-    if takenStartDate:
-        all_files = all_files.filter(SubjectFileEntity.imagingDate >= startDate)
-    if takenEndDate:
-        all_files = all_files.filter(SubjectFileEntity.imagingDate <= startDate)
+    if not 'ALL' in imageTypes:
+        all_files = all_files.filter(SubjectFileEntity.file_type.in_(imageType))
+    # if takenStartDate:
+    #     all_files = all_files.filter(SubjectFileEntity.imagingDate >= startDate)
+    # if takenEndDate:
+    #     all_files = all_files.filter(SubjectFileEntity.imagingDate <= startDate)
     return all_files
 
 def clean_old_files(root, test_string='download'):

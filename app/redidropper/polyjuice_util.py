@@ -11,39 +11,36 @@ def get_changes_for_deidentification():
     the changes that were made in the dicom file after the manual process
     """
     return {
-        'SOPInstanceUID': '',
         'AccessionNumber': '',
-        'InstitutionName': '',
-        'ReferringPhysicianName': '',
-        'StationName': '',
-        'StudyDescription': '',
-        'SeriesDescription': '',
-        'RequestingPhysician': '',
-        'PhysiciansOfRecord': '',
-        'PatientName': 'Anonymous',
-        'PatientBirthDate': "19990909",
-        'PatientSex': '',
-        'PatientAge': '',
-        'PatientWeight': '',
         'EthnicGroup': '',
+        'InstitutionName': '',
         'PatientAddress': '',
+        'PatientAge': '',
+        'PatientBirthDate': "19990909",
+        'PatientName': 'Anonymous',
+        'PatientSex': '',
+        'PatientWeight': '',
+        'PhysiciansOfRecord': '',
         'ProtocolName': '',
-        'StudyInstanceUID': '',
-        'SeriesInstanceUID': '',
-        'StudyID': '',
+        'ReferringPhysicianName': '',
+        'RequestingPhysician': '',
         'RescaleIntercept': None,
         'RescaleSlope': None,
         'RescaleType': None,
+        'SOPInstanceUID': '',
+        'SeriesDescription': '',
+        'StationName': '',
+        'StudyDescription': '',
+        'StudyID': '',
+        'StudyInstanceUID': '',
+        'SeriesInstanceUID': ''
     }
-
-def is_delete_value(value):
-    return value == None
 
 def _deidentify(image):
     changes = get_changes_for_deidentification()
     for key, value in changes.items():
-        delete = is_delete_value(value)
-        image.modify_item(key, value, delete)
+        obfuscate = True
+        image.modify_item(key, value, obfuscate=obfuscate)
     return image
 
 def get_file_type(metadata_string):

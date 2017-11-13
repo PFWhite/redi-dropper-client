@@ -1,0 +1,60 @@
+* Polyjuice integration
+** Presence of binary
+In order for dropper to utilize Polyjuice there needs to be the polyjuice binary
+on the server. This will be accomplished by means of a bash script
+
+*** script implementation
+**** TODO have a polyjuice requirements file
+**** TODO requirements file points to the right repo
+**** TODO pip install from that req file
+** Polyjuice changes
+Polyjuice requires a csv in order to determine what to change the patient
+tag to in the image file. This needs to be able to supplied expliciitly 
+without knowing information about what is contained in the image ahead of
+time
+
+*** implementation 
+**** DONE polyjuice explicit naming
+CLOSED: [2017-08-31 Thu 11:28]
+- provide flag to give id
+- enhance image update_patient_id function to utilize special __ALL__
+key
+**** polyjuice serialize metadata
+- polyjuice needs to be able to serialize the image headers as json
+**** TODO pull request
+** Call out to polyjuice
+In order to get the information from polyjuice we need to be able to call out to 
+the command line util. This needs to happen once the files come in through the ui
+
+*** implementation
+**** TODO make sure that polyjuice has everything it needs to run
+There needs to be csv to do some mapping when polyjuice runs this may not be
+able to be had before we get started due to not knowing what the file id is.
+
+We cn assume that every run of polyjuice will contain just one subject because
+there will be a linking of files to the individual id from the UI uploading process
+
+This NEEDS to happen though as otherwise the patient image ID will not be changed
+from what is given
+
+polyjuice needs to run on files in a location that is not 
+**** TODO make a non-blocking call to the binary from the route
+this is listed in the documentation from the os.spawn docs. There is a better
+way to do this with the subprocess module.
+
+** execution path
+- file chunks come down
+- files get merged together
+
+now we have files and they are entered into the database but we dont know whether they
+are processable by polyjuice
+
+we have to call out to polyjuice and have it process the files
+* polyjuice as a library
+running polyjuice as a command line tool is too hard
+from the asynchrony of using it to the replacement of files that polyjuice does 
+makes it ill suited for this.
+
+
+
+

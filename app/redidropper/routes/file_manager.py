@@ -117,7 +117,6 @@ def save_uploaded_file():
 
     # When all chunks are received we merge them
     subject_file = merge_files(fchunk)
-    # utils.clean_image(subject_file.subject.redcap_id)
 
     if subject_file is not None:
         prefix = app.config['REDIDROPPER_UPLOAD_SAVED_DIR']
@@ -125,12 +124,9 @@ def save_uploaded_file():
         delete_temp_files(fchunk)
         hash_matches = verify_file_integrity(fchunk)
 
+
         if hash_matches:
-            # try:
-            polyjuice_util.clean_image(subject_file, prefix)
-            # except Exception as ex:
-            #     print('Not a dicom file {}'.format(subject_file))
-            #     raise ex
+            # polyjuice_util.clean_image(subject_file, prefix)
 
             LogEntity.file_uploaded(session['uuid'],
                                     file_path)
@@ -222,7 +218,6 @@ def delete_file(subject_file_id):
     :rtype tuple
     :return (subject_file_id, deleted_file_path)
     """
-
     file_entity = SubjectFileEntity.query.filter_by(id=subject_file_id).one()
     file_path = file_entity.get_full_path(app.config['REDIDROPPER_UPLOAD_SAVED_DIR'])
     os.remove(file_path)

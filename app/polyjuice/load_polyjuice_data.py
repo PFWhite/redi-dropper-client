@@ -1,5 +1,6 @@
 import os
 import json
+import sys
 
 import yaml
 
@@ -8,6 +9,8 @@ import MySQLdb
 
 from image_file import ImageFile
 
+with open('dropper.polyjuice.conf.yaml', 'r') as infile:
+    config = yaml.load(infile)
 
 polyjuice_root = '/tmp'
 redcap_url = ''
@@ -27,7 +30,8 @@ for root, dirs, files in os.walk(polyjuice_root):
             with open(os.path.join(root, path), 'r') as infile:
                 data = json.load(infile)
         if data:
-            data['image_path']
+            data['image_path'] = os.path.join(root, path)
+            data['ptid'] = sys.argv[1]
             image = ImageFile(file_path, dropper_connection, redcap_api, **data)
 
             image.get_event_name()

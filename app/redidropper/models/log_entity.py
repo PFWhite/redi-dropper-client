@@ -27,6 +27,7 @@ from redidropper.models.log_type_entity import \
     LOG_TYPE_REDCAP_EVENTS_IMPORTED, \
     LOG_TYPE_BATCH_GENERATED, \
     LOG_TYPE_ACCOUNT_UPDATED, \
+    LOG_TYPE_TOKEN_GENERATED, \
     LOG_TYPE_TOKEN_AUTH_ATTEMPTED
 
 
