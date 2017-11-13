@@ -10,8 +10,6 @@
 window.staticData = {
     dateHeading: 'Image Upload Date',
     dateHelpText: 'Images uploaded before the start date or after the end date will not be selected.',
-    /* takenDateHeading: 'Image Taken Date',
-     * takenDateHelpText: 'Images taken before the start date or after the end date will not be selected.',*/
     subjectHeading: 'Subject ID',
     subjectHelpText: 'Select multiple by using the shift or the control or command key. ALL selects all subjects.',
     eventHeading: 'Redcap Events',
@@ -183,23 +181,6 @@ var BatchForm = React.createClass({
             },
         ];
 
-        /* var takenDateOptions = [
-         *     {
-         *         key: 'takenStartDate',
-         *         value: self.props.formData.takenStartDate,
-         *         type: 'date',
-         *         update: self.updateField.bind(self, 'takenStartDate'),
-         *         display: 'Start Date'
-         *     },
-         *     {
-         *         key: 'takenEndDate',
-         *         value: self.props.formData.takenEndDate,
-         *         type: 'date',
-         *         update: self.updateField.bind(self, 'takenEndDate'),
-         *         display: 'End Date'
-         *     },
-         * ];
-         */
         return(
             <div id="batch-form" className='row'>
                 <div className="col-sm-offset-2 col-sm-8">
@@ -224,9 +205,6 @@ var BatchForm = React.createClass({
                                         options={dateOptions}
                                         helpText={window.staticData.dateHelpText}/>
 
-                        {/* <BatchFormGroup heading={window.staticData.takenDateHeading}
-                        options={takenDateOptions}
-                        helpText={window.staticData.takenDateHelpText}/> */}
                         <button
                             className='btn'
                             onClick={this.props.toggle.bind(this)}>Finalize</button>
@@ -276,9 +254,6 @@ var BatchSummary = React.createClass({
                 <p className="summary-group">
                     The files downloaded will have been uploaded from {uploadStart} to {uploadEnd}.
                 </p>
-                {/* <p className="summary-group">
-                The files downloaded will have been created from {takenStart} to {takenEnd}.
-                </p> */}
                 <button
                     className='btn batch-finalize'
                     onClick={this.props.toggle.bind(this)}>Edit Batch</button>

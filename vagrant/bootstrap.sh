@@ -14,5 +14,4 @@ set -e
 configure_base
 install_utils
 install_apache_for_python
-install_polyjuice
 install_dropper

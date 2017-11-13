@@ -21,7 +21,6 @@ from redidropper.models.log_entity import LogEntity
 from werkzeug import secure_filename
 
 from redidropper import utils
-from redidropper import polyjuice_util
 from redidropper.main import app, db
 from redidropper.models.subject_entity import SubjectEntity
 from redidropper.models.subject_file_entity import SubjectFileEntity
@@ -126,7 +125,6 @@ def save_uploaded_file():
 
 
         if hash_matches:
-            # polyjuice_util.clean_image(subject_file, prefix)
 
             LogEntity.file_uploaded(session['uuid'],
                                     file_path)

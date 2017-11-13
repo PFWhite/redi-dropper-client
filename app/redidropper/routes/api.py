@@ -247,10 +247,6 @@ def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
         all_files = all_files.filter(SubjectFileEntity.uploaded_at <= startDate)
     if not 'ALL' in imageTypes:
         all_files = all_files.filter(SubjectFileEntity.file_type.in_(imageType))
-    # if takenStartDate:
-    #     all_files = all_files.filter(SubjectFileEntity.imagingDate >= startDate)
-    # if takenEndDate:
-    #     all_files = all_files.filter(SubjectFileEntity.imagingDate <= startDate)
     return all_files
 
 def clean_old_files(root, test_string='download'):

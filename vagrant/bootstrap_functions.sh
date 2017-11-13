@@ -112,12 +112,6 @@ function install_dropper() {
     popd
 }
 
-function install_polyjuice() {
-    pushd /home/vagrant
-    sudo bash /var/www/dropper/app/polyjuice/install.sh
-    popd
-}
-
 function log() {
     echo -n "Log: "
     echo $*
