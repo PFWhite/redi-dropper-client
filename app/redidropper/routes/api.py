@@ -230,8 +230,7 @@ def get_all_files():
                             SubjectEntity.redcap_id).join(EventEntity).join(SubjectEntity)
 
 def __get_matching_batch(subjects=[ 'ALL' ], events=[ 'ALL' ], startDate=None,
-                         endDate=None, takenStartDate=None, takenEndDate=None,
-                         imageTypes=[ 'ALL' ]):
+                         endDate=None, imageTypes=[ 'ALL' ]):
     """
     This is used with batch downloading to filter out the files that
     dont match what is passed

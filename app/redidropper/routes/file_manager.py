@@ -72,11 +72,11 @@ def save_file_metadata(fchunk):
 
     subject_file = SubjectFileEntity.create(
         subject_id=subject.id,
+        event_id=fchunk.event_id,
         file_name=fchunk.file_name,
         file_check_sum='pending',
         file_size=fchunk.total_size,
         file_type=fchunk.file_type,
-        event_id=fchunk.event_id,
         uploaded_at=added_date,
         user_id=current_user.id)
     logger.debug("Saved metadata to the db: ".format(subject_file))
@@ -189,7 +189,6 @@ def merge_files(fchunk):
     :return the object representing the file metadata
     """
     subject_file = save_file_metadata(fchunk)
-    # instead lets put the files in the polyjuice staging area
     prefix = app.config['REDIDROPPER_UPLOAD_SAVED_DIR']
     file_path = subject_file.get_full_path(prefix)
     file_name = fchunk.file_name
